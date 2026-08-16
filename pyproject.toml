@@ -1,0 +1,45 @@
+[build-system]
+requires = ["scikit-build-core>=0.9", "pybind11>=2.12"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "contrek"
+version = "0.1.0"
+description = "Python bindings for Contrek, a topology-preserving streaming polygonization engine for raster-to-vector conversion."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "Your Name" }
+]
+keywords = ["contour", "polygon", "vectorization", "image-processing", "raster-to-vector"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+]
+dependencies = [
+    "numpy>=1.21",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+
+[project.urls]
+Homepage = "https://github.com/<your-user>/contrek-python"
+"Core engine" = "https://github.com/runout77/contrek"
+
+[tool.scikit-build]
+wheel.expand-macos-universal-tags = true
+cmake.build-type = "Release"
+minimum-version = "0.9"
+
+[tool.scikit-build.cmake.define]
+BUILD_EXAMPLES = "OFF"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

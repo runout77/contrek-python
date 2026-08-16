@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.so
+*.egg-info/
+build/
+dist/
+.venv/
+_skbuild/
+.pytest_cache/
+tests/files/

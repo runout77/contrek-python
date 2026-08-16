@@ -1,0 +1,4 @@
+[submodule "vendor/contrek"]
+	path = vendor/contrek
+	url = https://github.com/runout77/contrek.git
+	branch = main
