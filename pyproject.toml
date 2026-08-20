@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [
-    { name = "Your Name" }
+    { name = "Emanuele Cesaroni" }
 ]
 keywords = ["contour", "polygon", "vectorization", "image-processing", "raster-to-vector"]
 classifiers = [
@@ -30,13 +30,14 @@ dependencies = [
 test = ["pytest>=7.0"]
 
 [project.urls]
-Homepage = "https://github.com/<your-user>/contrek-python"
+Homepage = "https://github.com/runout77/contrek-python"
 "Core engine" = "https://github.com/runout77/contrek"
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
 cmake.build-type = "Release"
 minimum-version = "0.9"
+sdist.include = ["vendor/contrek/**"]
 
 [tool.scikit-build.cmake.define]
 BUILD_EXAMPLES = "OFF"

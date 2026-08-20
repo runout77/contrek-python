@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
+import enum
 
 from . import _contrek
 from ._version import __version__
@@ -21,6 +22,27 @@ MatchMode = _contrek.MatchMode
 Connectivity = _contrek.Connectivity
 Config = _contrek.Config
 
+ResultVersus = enum.IntEnum(
+    "ResultVersus",
+    {"CLOCKWISE": _contrek.NODE_VERSUS_O, "ANTICLOCKWISE": _contrek.NODE_VERSUS_A},
+)
+
+# Low-level API: direct Bitmap / PolygonFinder access, bypassing the
+# one-shot contour()/trace() convenience wrapper.
+Identifier = _contrek.Identifier
+Bitmap = _contrek.Bitmap
+FastPngBitmap = _contrek.FastPngBitmap
+find_polygons = _contrek.find_polygons
+
+# Streaming API: progressive SVG/GeoJSON merge on disk, tile by tile.
+find_polygons_raw = _contrek.find_polygons_raw
+make_result_from_polygons = _contrek.make_result_from_polygons
+RawProcessResult = _contrek.RawProcessResult
+SvgStreamingMerger = _contrek.SvgStreamingMerger
+GeoJsonStreamingMerger = _contrek.GeoJsonStreamingMerger
+VerticalMerger = _contrek.VerticalMerger
+HorizontalMerger = _contrek.HorizontalMerger
+
 __all__ = [
     "contour",
     "ContourResult",
@@ -29,17 +51,31 @@ __all__ = [
     "Versus",
     "MatchMode",
     "Connectivity",
+    "rgb_to_target_color",
+    "Identifier",
+    "Bitmap",
+    "FastPngBitmap",
+    "find_polygons",
+    "find_polygons_raw",
+    "make_result_from_polygons",
+    "RawProcessResult",
+    "SvgStreamingMerger",
+    "GeoJsonStreamingMerger",
+    "VerticalMerger",
+    "HorizontalMerger",
+    "ResultVersus",
     "__version__",
 ]
+
 
 def rgb_to_target_color(r: int, g: int, b: int, a: int = 255) -> int:
     """Pack an RGBA color into the int32 value Contrek expects for
     Config.target_color.
- 
+
     Matches RawBitmap::rgb_value_at(), which reinterpret_casts the raw
     [R, G, B, A] bytes in memory as a single little-endian uint32_t:
     value = R | (G << 8) | (B << 16) | (A << 24).
- 
+
     Values are wrapped into the signed int32 range since target_color
     is a signed field in Config (and -1 means "auto-detect from the
     pixel at (0, 0)").
@@ -49,13 +85,14 @@ def rgb_to_target_color(r: int, g: int, b: int, a: int = 255) -> int:
     # pattern as signed, same as the C++ side would see it.
     return unsigned - 0x1_0000_0000 if unsigned >= 0x8000_0000 else unsigned
 
+
 @dataclass
 class Polygon:
     """A single traced polygon.
 
     outer: (N, 2) int32 ndarray of the outer ring's [x, y] coordinates.
     inner: list of (M, 2) int32 ndarrays, one per hole.
-    bounds: dict with min_x, min_y, max_x, max_y.
+    bounds: dict with min_x, min_y, max_x, max_y, is_empty.
     """
 
     outer: np.ndarray
@@ -80,6 +117,7 @@ class ContourResult:
     benchmarks: dict[str, float]
     treemap: np.ndarray
     polygons: list[Polygon] = field(default_factory=list)
+    options: dict = field(default_factory=dict)
 
     @classmethod
     def _from_raw(cls, raw: dict[str, Any]) -> "ContourResult":
@@ -93,6 +131,7 @@ class ContourResult:
             benchmarks=raw["benchmarks"],
             treemap=raw["treemap"],
             polygons=[Polygon._from_raw(p) for p in raw["polygons"]],
+            options=raw["options"],
         )
 
 

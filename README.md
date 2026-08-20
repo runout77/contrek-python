@@ -1,92 +1,84 @@
 # contrek-python
 
-Python bindings for [Contrek](https://github.com/runout77/contrek), a
-topology-preserving streaming polygonization engine for raster-to-vector
-conversion.
+Python bindings for [Contrek](https://github.com/runout77/contrek), a fast raster-to-vector polygon tracing engine written in C++. This wraps the C++ core with pybind11 so you can call it from Python without losing the performance.
 
-This wrapper (MIT) is a thin pybind11 layer around Contrek's C++17 core
-(AGPLv3). The upstream repo is vendored as a git submodule at
-`vendor/contrek` (a submodule always points at a repo root, so we can't
-mount just its `ext/cpp_polygon_finder/PolygonFinder` subfolder directly);
-CMake then builds only that subfolder from within it, so the engine stays
-canonical in a single upstream repo.
+Wrapper is MIT. Core (vendored as a git submodule at `vendor/contrek`) is AGPLv3. You can find more info in the main repo.
 
-## Getting the code
+## Install
+
+Source only, no prebuilt wheels. Needs a C++17 compiler and CMake — `pip install` compiles the core locally and tunes it for your CPU (`-march=native`, on by default in the core's own CMakeLists).
 
 ```bash
 git clone --recurse-submodules https://github.com/<your-user>/contrek-python.git
 cd contrek-python
-# or, if you already cloned without --recurse-submodules:
-git submodule update --init --recursive
-```
-
-## Development install
-
-```bash
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[test]"
 pytest
 ```
 
-Building compiles `ext/cpp_polygon_finder/PolygonFinder` (the submodule)
-together with `src/bindings.cpp` via CMake/scikit-build-core — no manual
-CMake invocation needed for a normal `pip install`.
+Linux/macOS only (POSIX threads).
 
-## Usage
+## High-level API
 
 ```python
 import contrek
 
-result = contrek.contour(
-    "image.png",
-    threads=4,
-    tiles=4,
-    versus=contrek.Versus.ANTICLOCKWISE,
-    treemap=True,
-)
+result = contrek.contour("image.png", threads=4, tiles=4, treemap=True)
 
 print(result.groups, result.width, result.height)
-print(result.benchmarks)
-
 for poly in result.polygons:
-    print(poly.outer)      # numpy.ndarray, shape (N, 2), dtype int32
-    print(poly.inner)      # list[numpy.ndarray]
-    print(poly.bounds)     # {"min_x": ..., "min_y": ..., "max_x": ..., "max_y": ...}
+    print(poly.outer)   # numpy int32 (N, 2)
+    print(poly.inner)   # list[numpy int32 (N, 2)]
+    print(poly.bounds)  # {min_x, min_y, max_x, max_y, is_empty}
 ```
 
-All point/coordinate data (`outer`, `inner`, `treemap`) comes back as
-NumPy `int32` arrays of shape `(N, 2)`, ready for `shapely`, `matplotlib`,
-or further NumPy processing -- not Python lists of objects.
+Coordinates always come back as NumPy arrays, not lists of objects.
 
-## Platform support
+## Low-level API
 
-Linux and macOS only, same constraint as the upstream engine (POSIX
-threading primitives). Windows users: use WSL2.
+Direct bitmap + finder access, for tile-based / synthetic / streaming workflows.
+
+```python
+bitmap = contrek.Bitmap(pattern_string, width)  # or contrek.FastPngBitmap(path)
+
+result = contrek.find_polygons(
+    bitmap,
+    options={"versus": "clockwise", "bounds": True, "compress": {"linear": True}},
+    target_color=ord("0"),
+    mode=contrek.MatchMode.EXACT_COLOR,
+)
+```
+
+`versus` accepts `"a"/"o"` for "clockwise" - "anticlockwise".
+
+`find_polygons_raw()` returns a `RawProcessResult` handle instead of a dict, for feeding into a merger without an intermediate conversion:
+
+```python
+tile = contrek.find_polygons_raw(bitmap, options={...}, target_color=..., mode=...)
+tile2 = contrek.find_polygons_raw(bitmap, options={...}, target_color=..., mode=...)
+
+merger = contrek.VerticalMerger(options={"bounds": True})   # or HorizontalMerger
+merger.add_tile(tile)
+merger.add_tile(tile2)
+result = merger.process_info()
+```
+
+`SvgStreamingMerger` / `GeoJsonStreamingMerger` write tiles to disk incrementally instead of holding everything in memory:
+
+```python
+merger = contrek.SvgStreamingMerger(options={"bounds": True}, output_path="out.svg", width=18, height=11)
+for i, tile in enumerate(tiles):
+    merger.add_tile(tile, flush=(i == len(tiles) - 1))
+result = merger.process_info()
+```
+
+`make_result_from_polygons(polygons, width, height)` builds a `RawProcessResult` from ready-made polygon data (no bitmap involved) — for feeding merger tests or externally-computed geometry.
+
+## Tests
+
+tests/ also doubles as usage examples — see the various test_*.py files for more ways to call the API.
 
 ## License
 
-- Python wrapper code: MIT, see `LICENSE`.
-- C++ core engine (submodule): AGPLv3. If you use it in a closed-source
-  product you must either open your source or obtain a commercial license
-  from the upstream author — see
-  [runout77/contrek's license notes](https://github.com/runout77/contrek#license).
-
-## Status
-
-`⚠️ RectBounds field names (min_x, min_y, max_x, max_y) used in
-bindings.cpp are ASSUMED from usage in ProcessResult::translate() --
-verify against the real RectBounds struct definition in the upstream
-repo (likely in Finder.h or a Geometry-ish header) and adjust
-polygon_to_pydict() in src/bindings.cpp if they differ.`
-
-Otherwise the binding surface is complete for v0.1: `Config` (all
-fields + enums), `contour()` / `trace()`, and the full `ProcessResult`
-→ `groups`, `width`, `height`, `versus`, `has_bounds`, `named_sequence`,
-`benchmarks`, `treemap`, `polygons` (each with `outer`/`inner`/`bounds`).
-
-Not yet bound: `ProcessResult::save_svg()` / `to_svg_stream()` /
-`draw_on_bitmap()` -- straightforward to add as methods once you decide
-whether Python should call back into the C++ SVG writer directly, or
-just build SVGs from the NumPy arrays on the Python side (e.g. via
-`svgwrite` or plain string formatting), which is probably more
-idiomatic for a Python-first workflow.
+- Wrapper: MIT (`LICENSE`)
+- Core (submodule): AGPLv3 — [details](https://github.com/runout77/contrek#license)

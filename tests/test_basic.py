@@ -45,3 +45,34 @@ def test_config_defaults():
   assert cfg.target_color == -1
   assert cfg.target_color == -1
 
+def test_bitmap():
+  print(contrek.Identifier)
+  print(contrek.Bitmap)
+  print(contrek.FastPngBitmap)
+  print(contrek.find_polygons)
+
+  pattern = (
+    "0000000"
+    "0111100"
+    "0111100"
+    "0000000"
+  )
+  bitmap = contrek.Bitmap(pattern, 7)
+  assert bitmap.w() == 7
+  assert bitmap.h() == 4
+
+  result = contrek.find_polygons(
+      bitmap,
+      options={"versus": "a", "bounds": True,"compress": {"linear": True}},
+      target_color=ord("0"),
+      mode=contrek.MatchMode.NOT_COLOR,
+  )
+  assert result["groups"] == 1
+  assert result["width"] == 7
+  assert result["height"] == 4
+  assert len(result["polygons"]) == 1
+  poly = result["polygons"][0]
+  expected = np.array([[1, 1], [1, 3], [5, 3], [5, 1]])
+  assert (poly['outer'] == expected).all()
+  assert result["versus"] == contrek.ResultVersus.ANTICLOCKWISE
+  assert result["options"] == {'bounds': True, 'compress': {'linear': True}, 'versus': 'a'}
