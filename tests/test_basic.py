@@ -35,8 +35,29 @@ def test_multithread():
   image = pathlib.Path(__file__).parent / "images" / "sample_10240x10240.png"
   color = contrek.rgb_to_target_color(255, 255, 255) # white
   result = contrek.contour(str(image), threads=8, tiles=8, target_color=color, mode=contrek.MatchMode.NOT_COLOR)
-  print(result.benchmarks)
   assert result.groups == 8730
+  assert result.benchmarks['inner'] != 0
+  assert result.benchmarks['outer'] != 0
+
+def test_multithread_find_polygons():
+  image = pathlib.Path(__file__).parent / "images" / "graphs_1024x1024.png"
+
+  bitmap = contrek.FastPngBitmap(str(image))
+  result = contrek.find_polygons(
+    bitmap,
+    number_of_threads=4,
+    options={
+      "number_of_tiles": 4,
+      "versus": "o",
+      "bounds": True,
+      "compress": {"uniq": True, "linear": True},
+    },
+    target_color=contrek.rgb_to_target_color(255, 255, 255, 255),
+    mode=contrek.MatchMode.NOT_COLOR
+  )
+  assert result['groups'] == 258
+  assert result['benchmarks']['inner'] != 0
+  assert result['benchmarks']['outer'] != 0
 
 def test_config_defaults():
   cfg = contrek.Config()

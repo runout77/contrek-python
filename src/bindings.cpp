@@ -23,6 +23,7 @@
 // Low-level API headers (for direct PolygonFinder / Bitmap access,
 // bypassing the one-shot Contrek::trace() convenience wrapper).
 #include "PolygonFinder.h"
+#include "concurrent/Finder.h"
 #include "Bitmap.h"
 #include "FastPngBitmap.h"
 #include "Options.h"
@@ -567,17 +568,25 @@ PYBIND11_MODULE(_contrek, m) {
     m.def(
         "find_polygons",
         [](Bitmap& bitmap, py::dict options, int32_t target_color, Contrek::MatchMode mode,
-           Bitmap* test_bitmap, int start_x, int end_x) {
+           Bitmap* test_bitmap, int start_x, int end_x, int number_of_threads) {
             Options cpp_options = pyobj_to_options(options);
             auto matcher = make_matcher(bitmap, target_color, mode);
+            bool wants_concurrent = number_of_threads > 0;
 
-            std::unique_ptr<::ProcessResult> result;
-            {
-                py::gil_scoped_release release;
+            py::dict out;
+            py::gil_scoped_release release;
+            if (wants_concurrent) {
+                Finder finder(number_of_threads, &bitmap, matcher.get(), cpp_options);
+                std::unique_ptr<::ProcessResult> raw(finder.process_info());
+                py::gil_scoped_acquire acquire;
+                out = process_result_to_pydict(*raw);
+            } else {
                 PolygonFinder finder(&bitmap, matcher.get(), test_bitmap, cpp_options, start_x, end_x);
-                result.reset(finder.process_info());
+                std::unique_ptr<::ProcessResult> raw(finder.process_info());
+                py::gil_scoped_acquire acquire;
+                out = process_result_to_pydict(*raw);
             }
-            return process_result_to_pydict(*result);
+            return out;
         },
         py::arg("bitmap"),
         py::arg("options") = py::dict(),
@@ -586,15 +595,14 @@ PYBIND11_MODULE(_contrek, m) {
         py::arg("test_bitmap") = nullptr,
         py::arg("start_x") = 0,
         py::arg("end_x") = -1,
+        py::arg("number_of_threads") = 1,
         R"doc(
-            Low-level polygon finding on an already-constructed Bitmap
-            (contrek.Bitmap or contrek.FastPngBitmap), bypassing the
-            Contrek::trace() convenience path.
+            Low-level polygon finding on an already-constructed Bitmap.
 
-            `options` is a plain dict mirroring the C++ Options type,
-            e.g. {"versus": contrek.Identifier("a"), "bounds": True,
-            "number_of_tiles": 2}. Values may be bool, int, float, str,
-            contrek.Identifier, or a nested dict.
+            Uses the real multi-threaded Finder (tiles + number_of_threads) if
+            number_of_threads > 1 or options contains "number_of_tiles"; otherwise
+            falls back to the single-threaded PolygonFinder, mirroring
+            Ruby's Contrek.contour! routing behavior.
 
             target_color == -1 (default) auto-detects from the bitmap's
             pixel (0, 0), same convention as Contrek::trace().
@@ -617,15 +625,22 @@ PYBIND11_MODULE(_contrek, m) {
     m.def(
         "find_polygons_raw",
         [](Bitmap& bitmap, py::dict options, int32_t target_color, Contrek::MatchMode mode,
-           Bitmap* test_bitmap, int start_x, int end_x) {
+           Bitmap* test_bitmap, int start_x, int end_x, int number_of_threads) {
             Options cpp_options = pyobj_to_options(options);
             auto matcher = make_matcher(bitmap, target_color, mode);
+
+            bool wants_concurrent = number_of_threads > 0;
 
             ::ProcessResult* raw;
             {
                 py::gil_scoped_release release;
-                PolygonFinder finder(&bitmap, matcher.get(), test_bitmap, cpp_options, start_x, end_x);
-                raw = finder.process_info();
+                if (wants_concurrent) {
+                    Finder finder(number_of_threads, &bitmap, matcher.get(), cpp_options);
+                    raw = finder.process_info();
+                } else {
+                    PolygonFinder finder(&bitmap, matcher.get(), test_bitmap, cpp_options, start_x, end_x);
+                    raw = finder.process_info();
+                }
             }
             return RawProcessResult(std::unique_ptr<::ProcessResult>(raw));
         },
@@ -636,10 +651,15 @@ PYBIND11_MODULE(_contrek, m) {
         py::arg("test_bitmap") = nullptr,
         py::arg("start_x") = 0,
         py::arg("end_x") = -1,
+        py::arg("number_of_threads") = 1,
         R"doc(
             Same as find_polygons(), but returns a RawProcessResult handle
             instead of a dict -- use this when feeding tiles into
             SvgStreamingMerger / GeoJsonStreamingMerger via add_tile().
+
+            Uses the real multi-threaded Finder if number_of_threads > 1 or options
+            contains "number_of_tiles"; otherwise falls back to
+            PolygonFinder (single-threaded).
         )doc"
     );
 
