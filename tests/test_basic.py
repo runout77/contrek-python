@@ -39,6 +39,23 @@ def test_multithread():
   assert result.benchmarks['inner'] != 0
   assert result.benchmarks['outer'] != 0
 
+def test_monothread_find_polygons():
+  image = pathlib.Path(__file__).parent / "images" / "graphs_1024x1024.png"
+
+  bitmap = contrek.FastPngBitmap(str(image))
+  result = contrek.find_polygons(
+    bitmap,
+    options={
+      "versus": "a",
+      "compress": {"uniq": True, "linear": True},
+    },
+    target_color=contrek.rgb_to_target_color(255, 255, 255, 255),
+    mode=contrek.MatchMode.NOT_COLOR
+  )
+  assert result['groups'] == 258
+  assert 'inner' not in result['benchmarks']
+  assert 'outer' not in result['benchmarks']
+
 def test_multithread_find_polygons():
   image = pathlib.Path(__file__).parent / "images" / "graphs_1024x1024.png"
 

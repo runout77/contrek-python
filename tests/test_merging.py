@@ -292,6 +292,8 @@ def test_horizontal_merger():
     target_color=ord("0"),
     mode=contrek.MatchMode.EXACT_COLOR
   )
+
+  # monothread merger
   merger = contrek.HorizontalMerger()
   merger.add_tile(result_left)
   merger.add_tile(result_right)
@@ -301,7 +303,6 @@ def test_horizontal_merger():
   assert result["width"] == 19
   assert result["height"] == 9
   assert len(result["polygons"]) == 1
-
   expected = load_expected_polygons(fixture_path("concurrent", "merging", "merge_mode.json"))
   assert_polygons_match(result["polygons"], expected)
 

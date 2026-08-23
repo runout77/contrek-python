@@ -595,7 +595,7 @@ PYBIND11_MODULE(_contrek, m) {
         py::arg("test_bitmap") = nullptr,
         py::arg("start_x") = 0,
         py::arg("end_x") = -1,
-        py::arg("number_of_threads") = 1,
+        py::arg("number_of_threads") = 0,
         R"doc(
             Low-level polygon finding on an already-constructed Bitmap.
 
@@ -651,7 +651,7 @@ PYBIND11_MODULE(_contrek, m) {
         py::arg("test_bitmap") = nullptr,
         py::arg("start_x") = 0,
         py::arg("end_x") = -1,
-        py::arg("number_of_threads") = 1,
+        py::arg("number_of_threads") = 0,
         R"doc(
             Same as find_polygons(), but returns a RawProcessResult handle
             instead of a dict -- use this when feeding tiles into
@@ -714,7 +714,7 @@ PYBIND11_MODULE(_contrek, m) {
 
     py::class_<PyHorizontalMerger>(m, "HorizontalMerger")
         .def(py::init<int, py::dict>(),
-             py::arg("threads") = 4, py::arg("options") = py::dict(),
+             py::arg("threads") = 0, py::arg("options") = py::dict(),
              "In-memory tile merge (no file output), stitching tiles "
              "horizontally instead of vertically.")
         .def("add_tile", &PyHorizontalMerger::add_tile, py::arg("tile"),
