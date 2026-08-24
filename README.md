@@ -47,14 +47,14 @@ for poly in result.polygons:
 <table>
 <tr>
 <td width="40%" valign="top">
-<img src="vendor/contrek/docs/images/modes/mode1.png" width="100%" alt="Mode 1">
+<img src="docs/images/modes/mode1.jpg" width="100%" alt="Mode 1">
 </td>
 <td width="60%" valign="top">
 The entire image is processed using a single core.
 
 **Profile:** low speed; low memory efficiency.
 <br><br>
-<center><img src="vendor/contrek/docs/images/modes/mode1_panel.png" width="80%" alt="Mode 1"></center>
+<center><img src="docs/images/modes/mode1_panel.jpg" width="80%" alt="Mode 1"></center>
 </td></tr></table>
 
 Trace polygons from a PNG file (`FastPngBitmap`).
@@ -80,7 +80,7 @@ result = contrek.find_polygons(
 <table>
 <tr>
 <td width="40%" valign="top">
-<img src="vendor/contrek/docs/images/modes/mode2.png" width="100%" alt="Mode 1">
+<img src="docs/images/modes/mode2.jpg" width="100%" alt="Mode 1">
 </td>
 <td width="60%" valign="top">
 The entire image is loaded first, then split into tiles and processed across multiple CPU cores. Partial results are progressively and dynamically merged: there is no predefined merge order, and adjacent pairs are processed as soon as they become available.
@@ -88,7 +88,7 @@ This mode prioritizes performance, using parallelism both for tile processing an
 
 **Profile:** maximum speed, with processing time decreasing as more cores become available; low memory efficiency.
 <br><br>
-<center><img src="vendor/contrek/docs/images/modes/mode2_panel.png" width="80%" alt="Mode 1"></center>
+<center><img src="docs/images/modes/mode2_panel.jpg" width="80%" alt="Mode 1"></center>
 </td></tr></table>
 
 Use 4 threads and 4 tiles
@@ -113,7 +113,7 @@ result = contrek.find_polygons(
 <table>
 <tr>
 <td width="40%" valign="top">
-<img src="vendor/contrek/docs/images/modes/mode3.png" width="100%" alt="Mode 1">
+<img src="docs/images/modes/mode3.jpg" width="100%" alt="Mode 1">
 </td>
 <td width="60%" valign="top">
 The image does not need to be loaded entirely into memory. Instead, it can be read progressively using a fixed-size buffer. For example, with a PNG source, this can be done using libspng's progressive decoding.
@@ -122,7 +122,7 @@ This mode provides a trade-off between performance and memory usage: the entire 
 
 **Profile:** medium speed; medium-high memory efficiency.
 <br><br>
-<center><img src="vendor/contrek/docs/images/modes/mode3_panel.png" width="80%" alt="Mode 1"></center>
+<center><img src="docs/images/modes/mode3_panel.jpg" width="80%" alt="Mode 1"></center>
 </td></tr></table>
 
 Trace polygons from two in-memory pattern strings (`Bitmap`, useful for synthetic tiles or tests).
@@ -179,7 +179,7 @@ Up is 6 rows height, down is 5 rows. Total after merging: 10 rows, because one r
 <table>
 <tr>
 <td width="40%" valign="top">
-<img src="vendor/contrek/docs/images/modes/mode4.png" width="100%" alt="Mode 1">
+<img src="docs/images/modes/mode4.jpg" width="100%" alt="Mode 1">
 </td>
 <td width="60%" valign="top">
 This mode extends the incremental processing used in Mode 3 by streaming the output as well.
@@ -188,7 +188,7 @@ This limits both the amount of raster data kept in memory and the accumulation o
 
 **Profile:** low speed; maximum memory efficiency.
 <br><br>
-<center><img src="vendor/contrek/docs/images/modes/mode4_panel.png" width="80%" alt="Mode 1"></center>
+<center><img src="docs/images/modes/mode4_panel.jpg" width="80%" alt="Mode 1"></center>
 </td></tr></table>
 
 Trace polygons from 4 in-memory pattern strings.
