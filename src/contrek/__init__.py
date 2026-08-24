@@ -112,6 +112,7 @@ class ContourResult:
     width: int
     height: int
     versus: int
+    number_of_threads: int
     has_bounds: bool
     named_sequence: str
     benchmarks: dict[str, float]
@@ -132,14 +133,15 @@ class ContourResult:
             treemap=raw["treemap"],
             polygons=[Polygon._from_raw(p) for p in raw["polygons"]],
             options=raw["options"],
+            number_of_threads=raw["number_of_threads"],
         )
 
 
 def contour(
     image_path: str,
     *,
-    threads: int | None = None,
-    tiles: int | None = None,
+    number_of_threads: int | None = None,
+    number_of_tiles: int | None = None,
     versus: "Versus | None" = None,
     connectivity: "Connectivity | None" = None,
     mode: "MatchMode | None" = None,
@@ -166,8 +168,8 @@ def contour(
     cfg = config if config is not None else Config()
 
     overrides = {
-        "threads": threads,
-        "tiles": tiles,
+        "number_of_threads": number_of_threads,
+        "number_of_tiles": number_of_tiles,
         "versus": versus,
         "connectivity_mode": connectivity,
         "mode": mode,

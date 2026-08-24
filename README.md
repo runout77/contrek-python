@@ -31,7 +31,7 @@ Trace polygons from an image file in one call.
 ```python
 import contrek
 
-result = contrek.contour("image.png", threads=4, tiles=4, treemap=True)
+result = contrek.contour("image.png", number_ot_threads=4, number_ot_tiles=4, treemap=True)
 print(result.groups, result.width, result.height)
 
 for poly in result.polygons:

@@ -217,6 +217,7 @@ py::dict process_result_to_pydict(const ::ProcessResult& result) {
     out["versus"] = result.versus;
     out["has_bounds"] = result.has_bounds;
     out["named_sequence"] = result.named_sequence;
+    out["number_of_threads"] = result.number_of_threads;
 
     py::dict benchmarks;
     for (const auto& kv : result.benchmarks) {
@@ -411,8 +412,8 @@ class PyGeoJsonStreamingMerger {
 // SVG/GeoJSON streaming path.
 class PyVerticalMerger {
  public:
-    PyVerticalMerger(int threads, py::dict options)
-        : merger_(threads, pyobj_to_options(options)) {}
+    PyVerticalMerger(int number_of_threads, py::dict options)
+        : merger_(number_of_threads, pyobj_to_options(options)) {}
 
     void add_tile(RawProcessResult& tile) {
         py::gil_scoped_release release;
@@ -438,8 +439,8 @@ class PyVerticalMerger {
 // instead of vertically.
 class PyHorizontalMerger {
  public:
-    PyHorizontalMerger(int threads, py::dict options)
-        : merger_(threads, pyobj_to_options(options)) {}
+    PyHorizontalMerger(int number_of_threads, py::dict options)
+        : merger_(number_of_threads, pyobj_to_options(options)) {}
 
     void add_tile(RawProcessResult& tile) {
         py::gil_scoped_release release;
@@ -482,8 +483,8 @@ PYBIND11_MODULE(_contrek, m) {
 
     py::class_<Contrek::Config>(m, "Config")
         .def(py::init<>())
-        .def_readwrite("threads", &Contrek::Config::threads)
-        .def_readwrite("tiles", &Contrek::Config::tiles)
+        .def_readwrite("number_of_threads", &Contrek::Config::threads)
+        .def_readwrite("number_of_tiles", &Contrek::Config::tiles)
         .def_readwrite("versus", &Contrek::Config::versus)
         .def_readwrite("compress_unique", &Contrek::Config::compress_unique)
         .def_readwrite("compress_linear", &Contrek::Config::compress_linear)
@@ -704,7 +705,7 @@ PYBIND11_MODULE(_contrek, m) {
 
     py::class_<PyVerticalMerger>(m, "VerticalMerger")
         .def(py::init<int, py::dict>(),
-             py::arg("threads") = 0, py::arg("options") = py::dict(),
+             py::arg("number_of_threads") = 0, py::arg("options") = py::dict(),
              "In-memory tile merge (no file output) -- combines RawProcessResult "
              "tiles (e.g. from find_polygons_raw()) into one merged result.")
         .def("add_tile", &PyVerticalMerger::add_tile, py::arg("tile"),
@@ -714,7 +715,7 @@ PYBIND11_MODULE(_contrek, m) {
 
     py::class_<PyHorizontalMerger>(m, "HorizontalMerger")
         .def(py::init<int, py::dict>(),
-             py::arg("threads") = 0, py::arg("options") = py::dict(),
+             py::arg("number_of_threads") = 0, py::arg("options") = py::dict(),
              "In-memory tile merge (no file output), stitching tiles "
              "horizontally instead of vertically.")
         .def("add_tile", &PyHorizontalMerger::add_tile, py::arg("tile"),

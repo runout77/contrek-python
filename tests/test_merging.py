@@ -72,6 +72,7 @@ def test_svg_streaming_merger(sample_stripes):
     assert result["width"] == width
     assert result["height"] == height
     assert len(result["polygons"]) == 0
+    assert result['number_of_threads'] == 0
     assert  filecmp.cmp(str(stream_fixture_path("test_16x23_w4.svg")), temp_path, shallow=False) == True
 
   finally:
@@ -109,6 +110,7 @@ def test_geojson_streaming_merger(sample_stripes):
     assert result["width"] == width
     assert result["height"] == height
     assert len(result["polygons"]) == 0
+    assert result['number_of_threads'] == 0
     assert  filecmp.cmp(str(stream_fixture_path("test_16x23_w4.geojson")), temp_path, shallow=False) == True
 
   finally:
@@ -248,6 +250,7 @@ def test_vertical_merger():
   assert result["groups"] == 1
   assert result["width"] == 30
   assert result["height"] == 10
+  assert result['number_of_threads'] == 0
   assert len(result["polygons"]) == 1
 
   expected = load_expected_polygons(fixture_path("concurrent", "merging", "merge_mode_example_14_vertical_bug_fixing.json"))
@@ -294,7 +297,7 @@ def test_horizontal_merger():
   )
 
   # monothread merger
-  merger = contrek.HorizontalMerger()
+  merger = contrek.HorizontalMerger(number_of_threads=2)
   merger.add_tile(result_left)
   merger.add_tile(result_right)
 
@@ -303,6 +306,7 @@ def test_horizontal_merger():
   assert result["width"] == 19
   assert result["height"] == 9
   assert len(result["polygons"]) == 1
+  assert result['number_of_threads'] == 2
   expected = load_expected_polygons(fixture_path("concurrent", "merging", "merge_mode.json"))
   assert_polygons_match(result["polygons"], expected)
 
