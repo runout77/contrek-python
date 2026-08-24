@@ -7,6 +7,8 @@ import pathlib
 
 CONTREK_ROOT = pathlib.Path(__file__).parent.parent / "vendor" / "contrek"
 FIXTURES_DIR = CONTREK_ROOT / "spec" / "files" / "fixtures"
+IMAGES_DIR = CONTREK_ROOT / "spec" / "files" / "images"
+STREAMS_DIR = CONTREK_ROOT / "spec" / "files" / "streams"
 
 def fixture_path(*parts):
     """Build a path under the vendored Contrek fixtures directory.
@@ -15,9 +17,6 @@ def fixture_path(*parts):
     """
     return FIXTURES_DIR.joinpath(*parts)
 
-STREAMS_DIR = CONTREK_ROOT / "spec" / "files" / "streams"
-
-
 def stream_fixture_path(*parts):
     """Build a path under the vendored Contrek streaming-output fixtures
     directory (expected SVG/GeoJSON files for streaming merger tests).
@@ -25,6 +24,14 @@ def stream_fixture_path(*parts):
     Usage: stream_fixture_path("test_18x11_w2.svg")
     """
     return STREAMS_DIR.joinpath(*parts)
+
+def image_path(*parts):
+    """Build a path under the vendored Contrek streaming-output images
+    directory.
+
+    Usage: image_path("test.png")
+    """
+    return IMAGES_DIR.joinpath(*parts)
 
 def load_expected_polygons(json_path):
     """Load a fixture JSON (list of {"outer": [{"x":.., "y":..}, ...],

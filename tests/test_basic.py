@@ -2,15 +2,11 @@ import pathlib
 
 import numpy as np
 import pytest
-
 import contrek
+from fixture_helpers import image_path
 
-SAMPLE_PNG = pathlib.Path(__file__).parent / "images" / "labyrinth3.png"
-
-
-@pytest.mark.skipif(not SAMPLE_PNG.exists(), reason="add a sample PNG under tests/files/")
 def test_contour_basic_shape():
-  result = contrek.contour(str(SAMPLE_PNG), number_of_threads=2, number_of_tiles=2, bounds=True)
+  result = contrek.contour(str(image_path("labyrinth3.png")), number_of_threads=2, number_of_tiles=2, bounds=True)
 
   assert result.groups == 1
   assert result.width == 260
@@ -33,17 +29,14 @@ def test_contour_basic_shape():
       assert poly.bounds["max_y"] == 253
 
 def test_multithread():
-  image = pathlib.Path(__file__).parent / "images" / "sample_10240x10240.png"
   color = contrek.rgb_to_target_color(255, 255, 255) # white
-  result = contrek.contour(str(image), number_of_threads=8, number_of_tiles=8, target_color=color, mode=contrek.MatchMode.NOT_COLOR)
+  result = contrek.contour(str(image_path("sample_10240x10240.png")), number_of_threads=8, number_of_tiles=8, target_color=color, mode=contrek.MatchMode.NOT_COLOR)
   assert result.groups == 8730
   assert result.number_of_threads == 8
   assert result.benchmarks['outer'] != 0
 
 def test_monothread_find_polygons():
-  image = pathlib.Path(__file__).parent / "images" / "graphs_1024x1024.png"
-
-  bitmap = contrek.FastPngBitmap(str(image))
+  bitmap = contrek.FastPngBitmap(str(image_path("graphs_1024x1024.png")))
   result = contrek.find_polygons(
     bitmap,
     options={
@@ -57,9 +50,7 @@ def test_monothread_find_polygons():
   assert result['number_of_threads'] == 0
 
 def test_multithread_find_polygons():
-  image = pathlib.Path(__file__).parent / "images" / "graphs_1024x1024.png"
-
-  bitmap = contrek.FastPngBitmap(str(image))
+  bitmap = contrek.FastPngBitmap(str(image_path("graphs_1024x1024.png")))
   result = contrek.find_polygons(
     bitmap,
     number_of_threads=4,
