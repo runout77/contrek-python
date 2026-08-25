@@ -15,7 +15,7 @@ pip install contrek
 For development (editable install, running tests):
 
 ```bash
-git clone --recurse-submodules https://github.com/<your-user>/contrek-python.git
+git clone --recurse-submodules https://github.com/runout77/contrek-python.git
 cd contrek-python
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[test]"
