@@ -255,6 +255,64 @@ Trace polygons from 4 in-memory pattern strings.
     result = merger.process_info()
 ```
 
+Or, for maximum memory efficiency, stream a geolocated GeoTIFF directly to GeoJSON using the Contrek Streaming API:
+
+```python
+  source = contrek.TiffSource(
+    "pania_della_croce_wgs84.tif",
+    suppress_warnings=True,
+  )
+  streamer = contrek.RasterStreamer(source, stripe_height=20)
+  buffer_bitmap = contrek.RawBitmap(source.width, streamer.stripe_height)
+  localization = source.geo_localization
+  print(localization["crs"]) # => {'authority': 'EPSG', 'code': 4326}
+
+  output_path = "output.geojson"
+  geo_finder = contrek.GeoJsonStreamingMerger(
+    options={
+      "geo_localization": localization,
+      "compress": {
+        "uniq": True,
+        "linear": True,
+      },
+    },
+    output_path=output_path,
+    pixel_value=11,
+  )
+
+  total_height = 0
+  def process_stripe(bitmap, buffer_rows, buffer_size, rows_read):
+    global total_height
+    tile = contrek.find_polygons_raw(
+      bitmap,
+      options={
+        "processing_height": buffer_rows,
+        "versus": "o",
+        "bounds": True,
+        "compress": {
+          "uniq": True,
+        },
+      },
+      target_color=contrek.rgb_to_target_color(255, 255, 255, 255),
+      mode=contrek.MatchMode.NOT_COLOR,
+    )
+    total_height += rows_read
+    geo_finder.add_tile(tile, total_height == source.height)
+
+  streamer.each(buffer_bitmap, process_stripe)
+  result = geo_finder.process_info()
+  print(result["width"]) # => 64
+  print(result["height"]) # => 64
+  print(len(result["polygons"])) # => 0 all polygons are streamed into geojson file
+
+  with open(output_path, "r", encoding="utf-8") as f:
+    geojson = f.read()
+  print(geojson) 
+  # => {"type":"FeatureCollection","features":[{"type":"Feature","properties":{"PixelVal":11},
+  # "geometry":{"type":"Polygon","coordinates":[[[10.3231042,44.0387701],[10.3231042,44.0370324],
+  # [10.3205687,44.0370324], ....
+```
+
 ## Building results from raw polygon data
 
 `make_result_from_polygons(polygons, width, height)` builds a `RawProcessResult` straight from polygon coordinates you already have — no bitmap or tracing involved. Useful for testing mergers, or feeding in geometry computed elsewhere.

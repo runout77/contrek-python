@@ -72,7 +72,7 @@ def test_streaming_geotiff(tmp_path):
       mode=contrek.MatchMode.NOT_COLOR,
     )
     total_height += rows_read
-    geo_finder.add_tile(tile, total_height >= source.height)
+    geo_finder.add_tile(tile, total_height == source.height)
 
 
   streamer.each(buffer_bitmap, process_stripe)
