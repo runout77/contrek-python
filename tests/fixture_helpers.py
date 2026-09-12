@@ -25,6 +25,40 @@ def stream_fixture_path(*parts):
     """
     return STREAMS_DIR.joinpath(*parts)
 
+def load_expected_stream(*parts):
+    """Load an expected streaming-output fixture as text."""
+    with open(stream_fixture_path(*parts), encoding="utf-8") as f:
+        return f.read()
+
+
+def assert_stream_matches(actual, *parts):
+    """Compare streaming output against an expected fixture file."""
+    expected = load_expected_stream(*parts)
+    assert actual == expected
+
+
+def assert_geojson_stream_matches(actual, *parts):
+    """Compare GeoJSON streaming output semantically."""
+    expected = load_expected_stream(*parts)
+
+    try:
+        actual_json = json.loads(actual)
+    except json.JSONDecodeError as e:
+        raise AssertionError(
+            f"Actual GeoJSON is invalid at {e.pos}: "
+            f"{actual[max(0, e.pos - 100):e.pos + 100]}"
+        ) from e
+
+    try:
+        expected_json = json.loads(expected)
+    except json.JSONDecodeError as e:
+        raise AssertionError(
+            f"Expected GeoJSON is invalid at {e.pos}: "
+            f"{expected[max(0, e.pos - 100):e.pos + 100]}"
+        ) from e
+
+    assert actual_json == expected_json
+
 def image_path(*parts):
     """Build a path under the vendored Contrek streaming-output images
     directory.

@@ -26,6 +26,13 @@
 #include "concurrent/Finder.h"
 #include "Bitmap.h"
 #include "FastPngBitmap.h"
+#include "RawBitmap.h"
+#include "streaming/RasterSource.h"
+#include "streaming/PngSource.h"
+#include "streaming/RasterStreamer.h"
+#ifdef CONTREK_HAS_TIFF
+#include "streaming/TiffSource.h"
+#endif
 #include "Options.h"
 #include "OptionValue.h"
 #include "RGBMatcher.h"
@@ -461,7 +468,26 @@ class PyHorizontalMerger {
     HorizontalMerger merger_;
 };
 
+class PyRasterStreamer {
+ public:
+    PyRasterStreamer(RasterSource& source, uint32_t stripe_height)
+        : source_(source), streamer_(source, stripe_height) {}
 
+    void each(Bitmap& bitmap, py::function callback) {
+        streamer_.each(bitmap, [&](Bitmap& buffer, uint32_t buffer_rows, std::size_t buffer_size, std::size_t rows_read) {
+            py::gil_scoped_acquire acquire;
+            callback(&buffer, buffer_rows, buffer_size, rows_read);
+        });
+    }
+
+    uint32_t stripe_height() const {
+        return streamer_.stripe_height();
+    }
+
+ private:
+    RasterSource& source_;
+    RasterStreamer streamer_;
+};
 
 PYBIND11_MODULE(_contrek, m) {
     m.doc() = "Low-level pybind11 bindings for the Contrek C++ core";
@@ -565,7 +591,10 @@ PYBIND11_MODULE(_contrek, m) {
     py::class_<FastPngBitmap, Bitmap>(m, "FastPngBitmap")
         .def(py::init<std::string>(), py::arg("path"),
              "Load and decode a PNG file from disk.");
-
+    py::class_<RawBitmap, Bitmap>(m, "RawBitmap")
+        .def(py::init<uint32_t, uint32_t>(),
+             py::arg("width"),
+             py::arg("height"));
     m.def(
         "find_polygons",
         [](Bitmap& bitmap, py::dict options, int32_t target_color, Contrek::MatchMode mode,
@@ -611,6 +640,59 @@ PYBIND11_MODULE(_contrek, m) {
             Returns the same dict shape as trace().
         )doc"
     );
+
+    py::class_<RasterSource>(m, "RasterSource");
+
+    py::class_<PngSource, RasterSource>(m, "PngSource")
+        .def(py::init<const std::string&>(), py::arg("path"))
+        .def_property_readonly("width", &PngSource::width)
+        .def_property_readonly("height", &PngSource::height)
+        .def("get_bytes_per_pixel", &PngSource::get_bytes_per_pixel);
+
+    #ifdef CONTREK_HAS_TIFF
+    py::class_<TiffSource, RasterSource>(m, "TiffSource")
+        .def(py::init<const std::string&, bool>(),
+          py::arg("path"),
+          py::arg("suppress_warnings") = false)
+        .def_property_readonly("width", &TiffSource::width)
+        .def_property_readonly("height", &TiffSource::height)
+        .def("get_bytes_per_pixel", &TiffSource::get_bytes_per_pixel)
+        .def_property_readonly("geo_localization", [](TiffSource& self) -> py::object {
+          const GeoLocalization& geo = self.geo_localization();
+
+          if (!geo.valid) {
+            return py::none();
+          }
+
+          py::dict transform;
+          transform["x_origin"] = geo.transform.x_origin;
+          transform["y_origin"] = geo.transform.y_origin;
+          transform["x_pixel_size"] = geo.transform.x_pixel_size;
+          transform["y_pixel_size"] = geo.transform.y_pixel_size;
+          transform["x_row_offset"] = geo.transform.x_row_offset;
+          transform["y_column_offset"] = geo.transform.y_column_offset;
+
+          py::dict crs;
+          crs["authority"] = geo.crs.authority;
+          crs["code"] = geo.crs.code;
+
+          py::dict result;
+          result["transform"] = transform;
+          result["crs"] = crs;
+
+          return py::object(result);
+        });
+    #endif
+
+    py::class_<PyRasterStreamer>(m, "RasterStreamer")
+        .def(py::init<RasterSource&, uint32_t>(),
+             py::arg("source"),
+             py::arg("stripe_height"),
+             py::keep_alive<1, 2>())
+        .def_property_readonly("stripe_height", &PyRasterStreamer::stripe_height)
+        .def("each", &PyRasterStreamer::each,
+             py::arg("bitmap"),
+             py::arg("callback"));
 
     // ----- Streaming API: SVG / GeoJSON progressive merge on disk -----
     //

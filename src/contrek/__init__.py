@@ -32,6 +32,10 @@ ResultVersus = enum.IntEnum(
 Identifier = _contrek.Identifier
 Bitmap = _contrek.Bitmap
 FastPngBitmap = _contrek.FastPngBitmap
+RawBitmap = _contrek.RawBitmap
+PngSource = _contrek.PngSource
+RasterSource = _contrek.RasterSource
+RasterStreamer = _contrek.RasterStreamer
 find_polygons = _contrek.find_polygons
 
 # Streaming API: progressive SVG/GeoJSON merge on disk, tile by tile.
@@ -55,6 +59,10 @@ __all__ = [
     "Identifier",
     "Bitmap",
     "FastPngBitmap",
+    "RawBitmap",
+    "RasterSource",
+    "PngSource",
+    "RasterStreamer",
     "find_polygons",
     "find_polygons_raw",
     "make_result_from_polygons",
@@ -66,6 +74,10 @@ __all__ = [
     "ResultVersus",
     "__version__",
 ]
+
+if hasattr(_contrek, "TiffSource"):
+    TiffSource = _contrek.TiffSource
+    __all__.append("TiffSource")
 
 
 def rgb_to_target_color(r: int, g: int, b: int, a: int = 255) -> int:
