@@ -165,7 +165,7 @@ def test_geojson_streaming_merger_with_compression(triangle_stripes):
     assert result["width"] == width
     assert result["height"] == height
     assert len(result["polygons"]) == 0
-    assert result["versus"] == contrek.ResultVersus.ANTICLOCKWISE
+    assert result["versus"] == contrek.ResultVersus.CLOCKWISE
     assert  filecmp.cmp(str(stream_fixture_path("test_18x11_w2.geojson")), temp_path, shallow=False) == True
 
   finally:
@@ -390,14 +390,13 @@ def test_merging_existings_coordinates():
     "inner": [],
     "bounds": {"min_x": 0, "max_x": 11, "min_y": 0, "max_y": 5},
   }]
-  result_up = contrek.make_result_from_polygons(polygons_up, width=12, height=5)
-
+  result_up = contrek.make_result_from_polygons(polygons_up, width=12, height=5,versus=contrek.Versus.ANTICLOCKWISE)
   polygons_down = [{
       "outer": [[0,0],[0,4],[11,4],[11,0],[9,0],[9,2],[2,2],[2,0]],
       "inner": [],
       "bounds": {"min_x": 0, "max_x": 11, "min_y": 0, "max_y": 4},
   }]
-  result_down = contrek.make_result_from_polygons(polygons_down, width=12, height=5)
+  result_down = contrek.make_result_from_polygons(polygons_down, width=12, height=5,versus=contrek.Versus.ANTICLOCKWISE)
 
   merger = contrek.VerticalMerger(options={"unsafe_mode": True})
   merger.add_tile(result_up)

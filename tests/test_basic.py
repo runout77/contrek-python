@@ -106,3 +106,10 @@ def test_bitmap():
   assert (poly['outer'] == expected).all()
   assert result["versus"] == contrek.ResultVersus.ANTICLOCKWISE
   assert result["options"] == {'bounds': True, 'compress': {'linear': True}, 'versus': 'a'}
+
+def test_rawbitmap_numpy():
+  bitmap = contrek.RawBitmap(100, 50)
+  image = np.asarray(bitmap)
+  assert image.shape == (50, 100, 4)
+  assert image.dtype == 'uint8' 
+  assert image.strides == (400, 4, 1)

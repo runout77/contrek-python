@@ -294,10 +294,11 @@ class RawProcessResult {
 // data, bypassing PolygonFinder/Bitmap entirely -- mirrors the Ruby
 // "merge mode from existing polygons" pattern, where hand-built
 // polygons are fed straight into a merger.
-RawProcessResult make_result_from_polygons(py::list polygons_in, int width, int height) {
+RawProcessResult make_result_from_polygons(py::list polygons_in, int width, int height, Contrek::Versus versus) {
     auto result = std::make_unique<::ProcessResult>();
     result->width = width;
     result->height = height;
+    result->versus = versus == Contrek::Versus::A ? Node::A : Node::O;
     for (const auto& item : polygons_in) {
         py::dict pd = py::reinterpret_borrow<py::dict>(item);
         result->polygons.push_back(pydict_to_polygon(pd));
@@ -591,10 +592,33 @@ PYBIND11_MODULE(_contrek, m) {
     py::class_<FastPngBitmap, Bitmap>(m, "FastPngBitmap")
         .def(py::init<std::string>(), py::arg("path"),
              "Load and decode a PNG file from disk.");
-    py::class_<RawBitmap, Bitmap>(m, "RawBitmap")
+    py::class_<RawBitmap, Bitmap>(m, "RawBitmap",py::buffer_protocol())
         .def(py::init<uint32_t, uint32_t>(),
              py::arg("width"),
-             py::arg("height"));
+             py::arg("height"))
+        .def("detach", &RawBitmap::detach)
+        .def_buffer([](RawBitmap& bitmap) -> py::buffer_info {
+            const auto width = bitmap.w();
+            const auto height = bitmap.h();
+            const auto bpp = bitmap.get_bytes_per_pixel();
+
+            return py::buffer_info(
+                const_cast<unsigned char*>(bitmap.get_row_ptr(0)),
+                sizeof(unsigned char),
+                py::format_descriptor<unsigned char>::format(),
+                3,
+                {
+                    static_cast<py::ssize_t>(height),
+                    static_cast<py::ssize_t>(width),
+                    static_cast<py::ssize_t>(bpp)
+                },
+                {
+                    static_cast<py::ssize_t>(width * bpp),
+                    static_cast<py::ssize_t>(bpp),
+                    static_cast<py::ssize_t>(1)
+                }
+            );
+        });
     m.def(
         "find_polygons",
         [](Bitmap& bitmap, py::dict options, int32_t target_color, Contrek::MatchMode mode,
@@ -749,7 +773,7 @@ PYBIND11_MODULE(_contrek, m) {
     m.def(
         "make_result_from_polygons",
         &make_result_from_polygons,
-        py::arg("polygons"), py::arg("width"), py::arg("height"),
+        py::arg("polygons"), py::arg("width"), py::arg("height"),py::arg("versus") = Contrek::Versus::A,
         R"doc(
             Build a RawProcessResult directly from ready-made polygon data,
             bypassing bitmap tracing entirely -- for feeding hand-built or
