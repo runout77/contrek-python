@@ -15,6 +15,7 @@ import enum
 
 from . import _contrek
 from ._version import __version__
+from ._contrek import opencv_contour_to_cell_boundary
 
 # Re-export enums / Config so users don't need to import _contrek directly.
 Versus = _contrek.Versus
@@ -72,6 +73,7 @@ __all__ = [
     "VerticalMerger",
     "HorizontalMerger",
     "ResultVersus",
+    "opencv_contour_to_cell_boundary",
     "__version__",
 ]
 

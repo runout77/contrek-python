@@ -41,6 +41,7 @@
 #include "GeoJsonStreamingMerger.h"
 #include "VerticalMerger.h"
 #include "HorizontalMerger.h"
+#include "polygon/shared/OpencvConverter.h"
 
 namespace py = pybind11;
 
@@ -490,6 +491,24 @@ class PyRasterStreamer {
     RasterStreamer streamer_;
 };
 
+py::list opencv_contour_to_cell_boundary(const py::object& points, const py::dict& bounds_in) {
+    auto input = pyobj_to_points(points);
+
+    RectBounds bounds;
+    bounds.min_x = bounds_in["min_x"].cast<int>();
+    bounds.max_x = bounds_in["max_x"].cast<int>();
+    bounds.min_y = bounds_in["min_y"].cast<int>();
+    bounds.max_y = bounds_in["max_y"].cast<int>();
+
+    auto output = OpencvConverter::contour_to_cell_boundary(input, bounds);
+
+    py::list result;
+    for (const auto& p : output)
+        result.append(py::make_tuple(p.x, p.y));
+
+    return result;
+}
+
 PYBIND11_MODULE(_contrek, m) {
     m.doc() = "Low-level pybind11 bindings for the Contrek C++ core";
 
@@ -561,6 +580,11 @@ PYBIND11_MODULE(_contrek, m) {
                 bounds (dict: min_x, min_y, max_x, max_y)
         )doc"
     );
+
+    m.def("opencv_contour_to_cell_boundary",
+      &opencv_contour_to_cell_boundary,
+      py::arg("points"),
+      py::arg("bounds"));
 
     // ----- Low-level API: direct Bitmap / PolygonFinder access --------
     //

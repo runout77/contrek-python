@@ -113,3 +113,19 @@ def test_rawbitmap_numpy():
   assert image.shape == (50, 100, 4)
   assert image.dtype == 'uint8' 
   assert image.strides == (400, 4, 1)
+
+def test_opencv_contour_to_cell_boundary():
+    contour = [
+        [2, 1],
+        [2, 2],
+        [2, 3],
+        [2, 2],
+    ]
+    bounds = {
+        "min_x": 2,
+        "max_x": 2,
+        "min_y": 1,
+        "max_y": 3,
+    }
+    result = contrek.opencv_contour_to_cell_boundary(contour, bounds)
+    assert result == [(2, 1), (2, 2), (2, 3), (2, 4), (3, 4), (3, 3), (3, 2), (3, 1)]
