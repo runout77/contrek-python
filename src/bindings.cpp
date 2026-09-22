@@ -18,6 +18,7 @@
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 #include <pybind11/operators.h>
+#include <sstream>
 
 #include "ContrekApi.h"
 // Low-level API headers (for direct PolygonFinder / Bitmap access,
@@ -286,7 +287,11 @@ class RawProcessResult {
     explicit RawProcessResult(std::unique_ptr<::ProcessResult> ptr) : ptr_(std::move(ptr)) {}
     ::ProcessResult& get() { return *ptr_; }
     py::dict to_dict() const { return process_result_to_pydict(*ptr_); }
-
+    std::string to_svg() const {
+        std::ostringstream os;
+        ptr_->to_svg_stream(os);
+        return os.str();
+    }
  private:
     std::unique_ptr<::ProcessResult> ptr_;
 };
@@ -751,7 +756,8 @@ PYBIND11_MODULE(_contrek, m) {
 
     py::class_<RawProcessResult>(m, "RawProcessResult")
         .def("to_dict", &RawProcessResult::to_dict,
-             "Convert to the same plain dict shape returned by trace()/find_polygons().");
+             "Convert to the same plain dict shape returned by trace()/find_polygons().")
+        .def("to_svg", &RawProcessResult::to_svg);
 
     m.def(
         "find_polygons_raw",

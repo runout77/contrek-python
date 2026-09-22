@@ -129,3 +129,23 @@ def test_opencv_contour_to_cell_boundary():
     }
     result = contrek.opencv_contour_to_cell_boundary(contour, bounds)
     assert result == [(2, 1), (2, 2), (2, 3), (2, 4), (3, 4), (3, 3), (3, 2), (3, 1)]
+
+def test_raw_process_result_to_svg():
+    pattern = (
+      "0000000"
+      "0111100"
+      "0111100"
+      "0000000"
+    )
+    bitmap = contrek.Bitmap(pattern, 7)
+    result = contrek.find_polygons_raw(
+        bitmap,
+        options={"versus": "a", "compress": {"linear": True}},
+        target_color=ord("0"),
+        mode=contrek.MatchMode.NOT_COLOR,
+    )
+    svg = result.to_svg()
+    expected = """<svg xmlns="http://www.w3.org/2000/svg" width="7" height="4">
+<polygon points="1,1 1,3 5,3 5,1" fill="none" stroke="red" stroke-width="1"/>
+</svg>"""
+    assert result.to_svg() == expected
