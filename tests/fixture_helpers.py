@@ -2,8 +2,9 @@
 fixtures (e.g. exported from the Ruby test suite's expected outputs).
 """
 import json
-import numpy as np
 import pathlib
+
+import numpy as np
 
 CONTREK_ROOT = pathlib.Path(__file__).parent.parent / "vendor" / "contrek"
 FIXTURES_DIR = CONTREK_ROOT / "spec" / "files" / "fixtures"

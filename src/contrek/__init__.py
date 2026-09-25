@@ -7,15 +7,15 @@ IDEs get autocomplete and results are easy to inspect.
 """
 from __future__ import annotations
 
+import enum
 from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
-import enum
 
 from . import _contrek
-from ._version import __version__
 from ._contrek import opencv_contour_to_cell_boundary
+from ._version import __version__
 
 # Re-export enums / Config so users don't need to import _contrek directly.
 Versus = _contrek.Versus
@@ -49,32 +49,32 @@ VerticalMerger = _contrek.VerticalMerger
 HorizontalMerger = _contrek.HorizontalMerger
 
 __all__ = [
-    "contour",
-    "ContourResult",
-    "Polygon",
-    "Config",
-    "Versus",
-    "MatchMode",
-    "Connectivity",
-    "rgb_to_target_color",
-    "Identifier",
     "Bitmap",
+    "Config",
+    "Connectivity",
+    "ContourResult",
     "FastPngBitmap",
-    "RawBitmap",
-    "RasterSource",
+    "GeoJsonStreamingMerger",
+    "HorizontalMerger",
+    "Identifier",
+    "MatchMode",
     "PngSource",
+    "Polygon",
+    "RasterSource",
     "RasterStreamer",
+    "RawBitmap",
+    "RawProcessResult",
+    "ResultVersus",
+    "SvgStreamingMerger",
+    "Versus",
+    "VerticalMerger",
+    "__version__",
+    "contour",
     "find_polygons",
     "find_polygons_raw",
     "make_result_from_polygons",
-    "RawProcessResult",
-    "SvgStreamingMerger",
-    "GeoJsonStreamingMerger",
-    "VerticalMerger",
-    "HorizontalMerger",
-    "ResultVersus",
     "opencv_contour_to_cell_boundary",
-    "__version__",
+    "rgb_to_target_color",
 ]
 
 if hasattr(_contrek, "TiffSource"):
@@ -114,7 +114,7 @@ class Polygon:
     bounds: dict[str, int]
 
     @classmethod
-    def _from_raw(cls, raw: dict[str, Any]) -> "Polygon":
+    def _from_raw(cls, raw: dict[str, Any]) -> Polygon:
         return cls(outer=raw["outer"], inner=raw["inner"], bounds=raw["bounds"])
 
 
@@ -135,7 +135,7 @@ class ContourResult:
     options: dict = field(default_factory=dict)
 
     @classmethod
-    def _from_raw(cls, raw: dict[str, Any]) -> "ContourResult":
+    def _from_raw(cls, raw: dict[str, Any]) -> ContourResult:
         return cls(
             groups=raw["groups"],
             width=raw["width"],
@@ -156,9 +156,9 @@ def contour(
     *,
     number_of_threads: int | None = None,
     number_of_tiles: int | None = None,
-    versus: "Versus | None" = None,
-    connectivity: "Connectivity | None" = None,
-    mode: "MatchMode | None" = None,
+    versus: Versus | None = None,
+    connectivity: Connectivity | None = None,
+    mode: MatchMode | None = None,
     target_color: int | None = None,
     treemap: bool | None = None,
     bounds: bool | None = None,
@@ -171,7 +171,7 @@ def contour(
     compress_douglas_peucker: bool | None = None,
     compress_visvalingam: bool | None = None,
     compress_visvalingam_tolerance: float | None = None,
-    config: "Config | None" = None,
+    config: Config | None = None,
 ) -> ContourResult:
     """Extract polygon contours from a raster image (e.g. PNG).
 

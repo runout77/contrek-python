@@ -1,9 +1,14 @@
-import pathlib
 
-import numpy as np
-import pytest
+from fixture_helpers import (
+  assert_geojson_stream_matches,
+  assert_polygons_match,
+  fixture_path,
+  image_path,
+  load_expected_polygons,
+)
+
 import contrek
-from fixture_helpers import assert_geojson_stream_matches, image_path, stream_fixture_path, fixture_path, load_expected_polygons, assert_polygons_match
+
 
 def test_streaming_png():
   source = contrek.PngSource(str(image_path("labyrinth2.png")))

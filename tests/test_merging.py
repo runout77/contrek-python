@@ -1,13 +1,17 @@
-import pathlib
-import time
-import numpy as np
-import pytest
 import filecmp
-import contrek
 import pathlib
-import io
 import tempfile
-from fixture_helpers import stream_fixture_path, fixture_path, load_expected_polygons, assert_polygons_match
+
+import pytest
+from fixture_helpers import (
+  assert_polygons_match,
+  fixture_path,
+  load_expected_polygons,
+  stream_fixture_path,
+)
+
+import contrek
+
 
 @pytest.fixture
 def sample_stripes():

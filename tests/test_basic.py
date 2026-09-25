@@ -1,9 +1,9 @@
-import pathlib
 
 import numpy as np
-import pytest
-import contrek
 from fixture_helpers import image_path
+
+import contrek
+
 
 def test_contour_basic_shape():
   result = contrek.contour(str(image_path("labyrinth3.png")), number_of_threads=2, number_of_tiles=2, bounds=True)
@@ -144,7 +144,6 @@ def test_raw_process_result_to_svg():
         target_color=ord("0"),
         mode=contrek.MatchMode.NOT_COLOR,
     )
-    svg = result.to_svg()
     expected = """<svg xmlns="http://www.w3.org/2000/svg" width="7" height="4">
 <polygon points="1,1 1,3 5,3 5,1" fill="none" stroke="red" stroke-width="1"/>
 </svg>"""
