@@ -5,6 +5,7 @@ The low-level `_contrek.trace()` call already returns NumPy arrays for
 point data; this module just wraps the raw dict in small dataclasses so
 IDEs get autocomplete and results are easy to inspect.
 """
+
 from __future__ import annotations
 
 import enum

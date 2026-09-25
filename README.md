@@ -31,12 +31,14 @@ Trace polygons from an image file in one call.
 ```python
 import contrek
 
-result = contrek.contour("image.png", number_ot_threads=4, number_ot_tiles=4, treemap=True)
+result = contrek.contour(
+    "image.png", number_ot_threads=4, number_ot_tiles=4, treemap=True
+)
 print(result.groups, result.width, result.height)
 
 for poly in result.polygons:
-    print(poly.outer)   # numpy int32 (N, 2)
-    print(poly.inner)   # list[numpy int32 (N, 2)]
+    print(poly.outer)  # numpy int32 (N, 2)
+    print(poly.inner)  # list[numpy int32 (N, 2)]
     print(poly.bounds)  # {min_x, min_y, max_x, max_y, is_empty}
 ```
 
@@ -63,10 +65,7 @@ Trace polygons from a PNG file (`FastPngBitmap`).
 bitmap = contrek.FastPngBitmap("graphs_1024x1024.png")
 result = contrek.find_polygons(
     bitmap,
-    options={
-      "versus": "clockwise",
-      "bounds": True,
-      "compress": {"linear": True}},
+    options={"versus": "clockwise", "bounds": True, "compress": {"linear": True}},
     target_color=contrek.rgb_to_target_color(255, 255, 255, 255),
     mode=contrek.MatchMode.EXACT_COLOR,
 )
@@ -129,49 +128,53 @@ Trace polygons from two in-memory pattern strings (`Bitmap`, useful for syntheti
 Up is 6 rows height, down is 5 rows. Total after merging: 10 rows, because one row is the shared scanline
 
 ```python
-  up =   (" 00000000000000               "
-          " 00000000000000               "
-          " 00          00               "
-          " 00          00               "
-          " 00          00               "
-          " 00          00               ")
+up = (
+    " 00000000000000               "
+    " 00000000000000               "
+    " 00          00               "
+    " 00          00               "
+    " 00          00               "
+    " 00          00               "
+)
 
-  down = (" 00          00               "
-          " 00          00               "
-          " 00          00               "
-          " 00000000000000               "
-          " 00000000000000               ")
+down = (
+    " 00          00               "
+    " 00          00               "
+    " 00          00               "
+    " 00000000000000               "
+    " 00000000000000               "
+)
 
-  result_up = contrek.find_polygons_raw(
+result_up = contrek.find_polygons_raw(
     contrek.Bitmap(up, 30),
     options={
-      "versus": "a",
-      "bounds": True,
+        "versus": "a",
+        "bounds": True,
     },
     target_color=ord("0"),
-    mode=contrek.MatchMode.EXACT_COLOR
-  )
-  result_down = contrek.find_polygons_raw(
+    mode=contrek.MatchMode.EXACT_COLOR,
+)
+result_down = contrek.find_polygons_raw(
     contrek.Bitmap(down, 30),
     options={
-      "versus": "a",
-      "bounds": True,
+        "versus": "a",
+        "bounds": True,
     },
     target_color=ord("0"),
-    mode=contrek.MatchMode.EXACT_COLOR
-  )
-  # results are obtained sequentially in the way you prefer
-  # we collect geometry by add_tile()
-  merger = contrek.VerticalMerger()
-  merger.add_tile(result_up)
-  merger.add_tile(result_down)
+    mode=contrek.MatchMode.EXACT_COLOR,
+)
+# results are obtained sequentially in the way you prefer
+# we collect geometry by add_tile()
+merger = contrek.VerticalMerger()
+merger.add_tile(result_up)
+merger.add_tile(result_down)
 
-  # now finally calling process_info() you start merging and
-  # get merged data
-  result = merger.process_info()
-  assert result["groups"] == 1
-  assert result["width"] == 30
-  assert result["height"] == 10
+# now finally calling process_info() you start merging and
+# get merged data
+result = merger.process_info()
+assert result["groups"] == 1
+assert result["width"] == 30
+assert result["height"] == 10
 ```
 
 ### Mode 4: End-to-end streaming
@@ -258,59 +261,62 @@ Trace polygons from 4 in-memory pattern strings.
 Or, for maximum memory efficiency, stream a geolocated GeoTIFF directly to GeoJSON using the Contrek Streaming API:
 
 ```python
-  source = contrek.TiffSource(
+source = contrek.TiffSource(
     "pania_della_croce_wgs84.tif",
     suppress_warnings=True,
-  )
-  streamer = contrek.RasterStreamer(source, stripe_height=20)
-  buffer_bitmap = contrek.RawBitmap(source.width, streamer.stripe_height)
-  localization = source.geo_localization
-  print(localization["crs"]) # => {'authority': 'EPSG', 'code': 4326}
+)
+streamer = contrek.RasterStreamer(source, stripe_height=20)
+buffer_bitmap = contrek.RawBitmap(source.width, streamer.stripe_height)
+localization = source.geo_localization
+print(localization["crs"])  # => {'authority': 'EPSG', 'code': 4326}
 
-  output_path = "output.geojson"
-  geo_finder = contrek.GeoJsonStreamingMerger(
+output_path = "output.geojson"
+geo_finder = contrek.GeoJsonStreamingMerger(
     options={
-      "geo_localization": localization,
-      "compress": {
-        "uniq": True,
-        "linear": True,
-      },
+        "geo_localization": localization,
+        "compress": {
+            "uniq": True,
+            "linear": True,
+        },
     },
     output_path=output_path,
     pixel_value=11,
-  )
+)
 
-  total_height = 0
-  def process_stripe(bitmap, buffer_rows, buffer_size, rows_read):
+total_height = 0
+
+
+def process_stripe(bitmap, buffer_rows, buffer_size, rows_read):
     global total_height
     tile = contrek.find_polygons_raw(
-      bitmap,
-      options={
-        "processing_height": buffer_rows,
-        "versus": "o",
-        "bounds": True,
-        "compress": {
-          "uniq": True,
+        bitmap,
+        options={
+            "processing_height": buffer_rows,
+            "versus": "o",
+            "bounds": True,
+            "compress": {
+                "uniq": True,
+            },
         },
-      },
-      target_color=contrek.rgb_to_target_color(255, 255, 255, 255),
-      mode=contrek.MatchMode.NOT_COLOR,
+        target_color=contrek.rgb_to_target_color(255, 255, 255, 255),
+        mode=contrek.MatchMode.NOT_COLOR,
     )
     total_height += rows_read
     geo_finder.add_tile(tile, total_height == source.height)
 
-  streamer.each(buffer_bitmap, process_stripe)
-  result = geo_finder.process_info()
-  print(result["width"]) # => 64
-  print(result["height"]) # => 64
-  print(len(result["polygons"])) # => 0 all polygons are streamed into geojson file
 
-  with open(output_path, "r", encoding="utf-8") as f:
+streamer.each(buffer_bitmap, process_stripe)
+result = geo_finder.process_info()
+print(result["width"])  # => 64
+print(result["height"])  # => 64
+print(len(result["polygons"]))  # => 0 all polygons are streamed into geojson file
+
+with open(output_path, "r", encoding="utf-8") as f:
     geojson = f.read()
-  print(geojson) 
-  # => {"type":"FeatureCollection","features":[{"type":"Feature","properties":{"PixelVal":11},
-  # "geometry":{"type":"Polygon","coordinates":[[[10.3231042,44.0387701],[10.3231042,44.0370324],
-  # [10.3205687,44.0370324], ....
+print(geojson)
+# => {"type":"FeatureCollection","features":[{"type":"Feature","properties":{"PixelVal":11},
+# "geometry":{"type":"Polygon","coordinates":[[[10.3231042,44.0387701],[10.3231042,44.0370324],
+# [10.3205687,44.0370324], ....
 ```
 
 ## Building results from raw polygon data

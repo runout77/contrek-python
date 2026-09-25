@@ -1,4 +1,3 @@
-
 import numpy as np
 from fixture_helpers import image_path
 
@@ -6,113 +5,130 @@ import contrek
 
 
 def test_contour_basic_shape():
-  result = contrek.contour(str(image_path("labyrinth3.png")), number_of_threads=2, number_of_tiles=2, bounds=True)
+    result = contrek.contour(
+        str(image_path("labyrinth3.png")),
+        number_of_threads=2,
+        number_of_tiles=2,
+        bounds=True,
+    )
 
-  assert result.groups == 1
-  assert result.width == 260
-  assert result.height == 260
-  assert result.number_of_threads == 2
-  assert isinstance(result.benchmarks, dict)
-  assert isinstance(result.treemap, np.ndarray)
+    assert result.groups == 1
+    assert result.width == 260
+    assert result.height == 260
+    assert result.number_of_threads == 2
+    assert isinstance(result.benchmarks, dict)
+    assert isinstance(result.treemap, np.ndarray)
 
-  for poly in result.polygons:
-    assert poly.outer.ndim == 2
-    assert poly.outer.shape[1] == 2
-    assert poly.outer.dtype == np.int32
-    for ring in poly.inner:
-      assert ring.shape[1] == 2
-    assert set(poly.bounds) == {"min_x", "min_y", "max_x", "max_y", "is_empty"}
-    if not poly.bounds["is_empty"]:
-      assert poly.bounds["min_x"] == 6
-      assert poly.bounds["max_x"] == 253
-      assert poly.bounds["min_y"] == 6
-      assert poly.bounds["max_y"] == 253
+    for poly in result.polygons:
+        assert poly.outer.ndim == 2
+        assert poly.outer.shape[1] == 2
+        assert poly.outer.dtype == np.int32
+        for ring in poly.inner:
+            assert ring.shape[1] == 2
+        assert set(poly.bounds) == {"min_x", "min_y", "max_x", "max_y", "is_empty"}
+        if not poly.bounds["is_empty"]:
+            assert poly.bounds["min_x"] == 6
+            assert poly.bounds["max_x"] == 253
+            assert poly.bounds["min_y"] == 6
+            assert poly.bounds["max_y"] == 253
+
 
 def test_multithread():
-  color = contrek.rgb_to_target_color(255, 255, 255) # white
-  result = contrek.contour(str(image_path("sample_10240x10240.png")), number_of_threads=8, number_of_tiles=8, target_color=color, mode=contrek.MatchMode.NOT_COLOR)
-  assert result.groups == 8730
-  assert result.number_of_threads == 8
-  assert result.benchmarks['outer'] != 0
+    color = contrek.rgb_to_target_color(255, 255, 255)  # white
+    result = contrek.contour(
+        str(image_path("sample_10240x10240.png")),
+        number_of_threads=8,
+        number_of_tiles=8,
+        target_color=color,
+        mode=contrek.MatchMode.NOT_COLOR,
+    )
+    assert result.groups == 8730
+    assert result.number_of_threads == 8
+    assert result.benchmarks["outer"] != 0
+
 
 def test_monothread_find_polygons():
-  bitmap = contrek.FastPngBitmap(str(image_path("graphs_1024x1024.png")))
-  result = contrek.find_polygons(
-    bitmap,
-    options={
-      "versus": "a",
-      "compress": {"uniq": True, "linear": True},
-    },
-    target_color=contrek.rgb_to_target_color(255, 255, 255, 255),
-    mode=contrek.MatchMode.NOT_COLOR
-  )
-  assert result['groups'] == 258
-  assert result['number_of_threads'] == 0
+    bitmap = contrek.FastPngBitmap(str(image_path("graphs_1024x1024.png")))
+    result = contrek.find_polygons(
+        bitmap,
+        options={
+            "versus": "a",
+            "compress": {"uniq": True, "linear": True},
+        },
+        target_color=contrek.rgb_to_target_color(255, 255, 255, 255),
+        mode=contrek.MatchMode.NOT_COLOR,
+    )
+    assert result["groups"] == 258
+    assert result["number_of_threads"] == 0
+
 
 def test_multithread_find_polygons():
-  bitmap = contrek.FastPngBitmap(str(image_path("graphs_1024x1024.png")))
-  result = contrek.find_polygons(
-    bitmap,
-    number_of_threads=4,
-    options={
-      "number_of_tiles": 4,
-      "versus": "o",
-      "bounds": True,
-      "compress": {"uniq": True, "linear": True},
-    },
-    target_color=contrek.rgb_to_target_color(255, 255, 255, 255),
-    mode=contrek.MatchMode.NOT_COLOR
-  )
-  assert result['groups'] == 258
-  assert result['benchmarks']['inner'] != 0
-  assert result['benchmarks']['outer'] != 0
-  assert result['number_of_threads'] == 4
+    bitmap = contrek.FastPngBitmap(str(image_path("graphs_1024x1024.png")))
+    result = contrek.find_polygons(
+        bitmap,
+        number_of_threads=4,
+        options={
+            "number_of_tiles": 4,
+            "versus": "o",
+            "bounds": True,
+            "compress": {"uniq": True, "linear": True},
+        },
+        target_color=contrek.rgb_to_target_color(255, 255, 255, 255),
+        mode=contrek.MatchMode.NOT_COLOR,
+    )
+    assert result["groups"] == 258
+    assert result["benchmarks"]["inner"] != 0
+    assert result["benchmarks"]["outer"] != 0
+    assert result["number_of_threads"] == 4
+
 
 def test_config_defaults():
-  cfg = contrek.Config()
-  assert cfg.number_of_threads == 0
-  assert cfg.number_of_tiles == 1
-  assert cfg.target_color == -1
-  assert cfg.target_color == -1
+    cfg = contrek.Config()
+    assert cfg.number_of_threads == 0
+    assert cfg.number_of_tiles == 1
+    assert cfg.target_color == -1
+    assert cfg.target_color == -1
+
 
 def test_bitmap():
-  print(contrek.Identifier)
-  print(contrek.Bitmap)
-  print(contrek.FastPngBitmap)
-  print(contrek.find_polygons)
+    print(contrek.Identifier)
+    print(contrek.Bitmap)
+    print(contrek.FastPngBitmap)
+    print(contrek.find_polygons)
 
-  pattern = (
-    "0000000"
-    "0111100"
-    "0111100"
-    "0000000"
-  )
-  bitmap = contrek.Bitmap(pattern, 7)
-  assert bitmap.w() == 7
-  assert bitmap.h() == 4
+    pattern = "0000000011110001111000000000"
+    bitmap = contrek.Bitmap(pattern, 7)
+    assert bitmap.w() == 7
+    assert bitmap.h() == 4
 
-  result = contrek.find_polygons(
-      bitmap,
-      options={"versus": "a", "bounds": True,"compress": {"linear": True}},
-      target_color=ord("0"),
-      mode=contrek.MatchMode.NOT_COLOR,
-  )
-  assert result["groups"] == 1
-  assert result["width"] == 7
-  assert result["height"] == 4
-  assert len(result["polygons"]) == 1
-  poly = result["polygons"][0]
-  expected = np.array([[1, 1], [1, 3], [5, 3], [5, 1]])
-  assert (poly['outer'] == expected).all()
-  assert result["versus"] == contrek.ResultVersus.ANTICLOCKWISE
-  assert result["options"] == {'bounds': True, 'compress': {'linear': True}, 'versus': 'a'}
+    result = contrek.find_polygons(
+        bitmap,
+        options={"versus": "a", "bounds": True, "compress": {"linear": True}},
+        target_color=ord("0"),
+        mode=contrek.MatchMode.NOT_COLOR,
+    )
+    assert result["groups"] == 1
+    assert result["width"] == 7
+    assert result["height"] == 4
+    assert len(result["polygons"]) == 1
+    poly = result["polygons"][0]
+    expected = np.array([[1, 1], [1, 3], [5, 3], [5, 1]])
+    assert (poly["outer"] == expected).all()
+    assert result["versus"] == contrek.ResultVersus.ANTICLOCKWISE
+    assert result["options"] == {
+        "bounds": True,
+        "compress": {"linear": True},
+        "versus": "a",
+    }
+
 
 def test_rawbitmap_numpy():
-  bitmap = contrek.RawBitmap(100, 50)
-  image = np.asarray(bitmap)
-  assert image.shape == (50, 100, 4)
-  assert image.dtype == 'uint8' 
-  assert image.strides == (400, 4, 1)
+    bitmap = contrek.RawBitmap(100, 50)
+    image = np.asarray(bitmap)
+    assert image.shape == (50, 100, 4)
+    assert image.dtype == "uint8"
+    assert image.strides == (400, 4, 1)
+
 
 def test_opencv_contour_to_cell_boundary():
     contour = [
@@ -130,13 +146,9 @@ def test_opencv_contour_to_cell_boundary():
     result = contrek.opencv_contour_to_cell_boundary(contour, bounds)
     assert result == [(2, 1), (2, 2), (2, 3), (2, 4), (3, 4), (3, 3), (3, 2), (3, 1)]
 
+
 def test_raw_process_result_to_svg():
-    pattern = (
-      "0000000"
-      "0111100"
-      "0111100"
-      "0000000"
-    )
+    pattern = "0000000011110001111000000000"
     bitmap = contrek.Bitmap(pattern, 7)
     result = contrek.find_polygons_raw(
         bitmap,

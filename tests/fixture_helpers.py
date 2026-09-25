@@ -1,6 +1,7 @@
 """Helpers for comparing Contrek results against Ruby-generated JSON
 fixtures (e.g. exported from the Ruby test suite's expected outputs).
 """
+
 import json
 import pathlib
 
@@ -11,12 +12,14 @@ FIXTURES_DIR = CONTREK_ROOT / "spec" / "files" / "fixtures"
 IMAGES_DIR = CONTREK_ROOT / "spec" / "files" / "images"
 STREAMS_DIR = CONTREK_ROOT / "spec" / "files" / "streams"
 
+
 def fixture_path(*parts):
     """Build a path under the vendored Contrek fixtures directory.
 
     Usage: fixture_path("concurrent", "merging", "merge_mode_from_existing_polygons.json")
     """
     return FIXTURES_DIR.joinpath(*parts)
+
 
 def stream_fixture_path(*parts):
     """Build a path under the vendored Contrek streaming-output fixtures
@@ -25,6 +28,7 @@ def stream_fixture_path(*parts):
     Usage: stream_fixture_path("test_18x11_w2.svg")
     """
     return STREAMS_DIR.joinpath(*parts)
+
 
 def load_expected_stream(*parts):
     """Load an expected streaming-output fixture as text."""
@@ -47,7 +51,7 @@ def assert_geojson_stream_matches(actual, *parts):
     except json.JSONDecodeError as e:
         raise AssertionError(
             f"Actual GeoJSON is invalid at {e.pos}: "
-            f"{actual[max(0, e.pos - 100):e.pos + 100]}"
+            f"{actual[max(0, e.pos - 100) : e.pos + 100]}"
         ) from e
 
     try:
@@ -55,10 +59,11 @@ def assert_geojson_stream_matches(actual, *parts):
     except json.JSONDecodeError as e:
         raise AssertionError(
             f"Expected GeoJSON is invalid at {e.pos}: "
-            f"{expected[max(0, e.pos - 100):e.pos + 100]}"
+            f"{expected[max(0, e.pos - 100) : e.pos + 100]}"
         ) from e
 
     assert actual_json == expected_json
+
 
 def image_path(*parts):
     """Build a path under the vendored Contrek streaming-output images
@@ -67,6 +72,7 @@ def image_path(*parts):
     Usage: image_path("test.png")
     """
     return IMAGES_DIR.joinpath(*parts)
+
 
 def load_expected_polygons(json_path):
     """Load a fixture JSON (list of {"outer": [{"x":.., "y":..}, ...],
@@ -105,4 +111,6 @@ def assert_polygons_match(actual_polygons, expected_polygons):
             f"Polygon {i}: inner ring count differs"
         )
         for j, (a_ring, e_ring) in enumerate(zip(actual["inner"], expected["inner"])):
-            assert (a_ring == e_ring).all(), f"Polygon {i}, inner ring {j}: points differ"
+            assert (a_ring == e_ring).all(), (
+                f"Polygon {i}, inner ring {j}: points differ"
+            )
