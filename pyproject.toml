@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "contrek"
-version = "0.1.11"
+dynamic = ["version"]
 description = "Python bindings for Contrek, a topology-preserving streaming polygonization engine for raster-to-vector conversion."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -38,6 +38,10 @@ wheel.expand-macos-universal-tags = true
 cmake.build-type = "Release"
 minimum-version = "0.9"
 sdist.include = ["vendor/contrek/**"]
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "src/contrek/_version.py"
 
 [tool.scikit-build.cmake.define]
 BUILD_EXAMPLES = "OFF"
