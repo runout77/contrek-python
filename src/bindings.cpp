@@ -19,6 +19,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <sstream>
+#include <utility>
 
 #include "ContrekApi.h"
 // Low-level API headers (for direct PolygonFinder / Bitmap access,
@@ -303,7 +304,9 @@ private:
 // data, bypassing PolygonFinder/Bitmap entirely -- mirrors the Ruby
 // "merge mode from existing polygons" pattern, where hand-built
 // polygons are fed straight into a merger.
-RawProcessResult make_result_from_polygons(py::list polygons_in, int width, int height, Contrek::Versus versus) {
+
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+RawProcessResult make_result_from_polygons(const py::list& polygons_in, int width, int height, Contrek::Versus versus) {
   auto result = std::make_unique<::ProcessResult>();
   result->width = width;
   result->height = height;
@@ -320,7 +323,7 @@ RawProcessResult make_result_from_polygons(py::list polygons_in, int width, int 
 // Custom streambuf C++ che reindirizza le scritture al metodo .write() di un oggetto Python
 class PyStreamBuffer : public std::streambuf {
 public:
-  explicit PyStreamBuffer(py::object py_stream) : py_stream_(py_stream) {}
+  explicit PyStreamBuffer(py::object py_stream) : py_stream_(std::move(py_stream)) {}
 
 protected:
   virtual std::streamsize xsputn(const char* s, std::streamsize n) override {
@@ -348,7 +351,7 @@ private:
 // std::ofstream*, they don't own or open it themselves.
 class PySvgStreamingMerger {
 public:
-  PySvgStreamingMerger(py::dict options, const std::string& output_path, int width, int height)
+  PySvgStreamingMerger(const py::dict& options, const std::string& output_path, int width, int height)
       : ofs_(output_path), merger_(0, pyobj_to_options(options), &ofs_, width, height) {
     if (!ofs_.is_open()) {
       throw std::runtime_error("Unable to open output file: " + output_path);
@@ -386,7 +389,7 @@ private:
 
 class PyGeoJsonStreamingMerger {
 public:
-  PyGeoJsonStreamingMerger(py::dict options, const std::string& output_path, uint32_t pixel_value)
+  PyGeoJsonStreamingMerger(const py::dict& options, const std::string& output_path, uint32_t pixel_value)
       : ofs_(output_path), merger_(0, pyobj_to_options(options), &ofs_, pixel_value) {
     if (!ofs_.is_open()) {
       throw std::runtime_error("Unable to open output file: " + output_path);
@@ -427,7 +430,8 @@ private:
 // SVG/GeoJSON streaming path.
 class PyVerticalMerger {
 public:
-  PyVerticalMerger(int number_of_threads, py::dict options) : merger_(number_of_threads, pyobj_to_options(options)) {}
+  PyVerticalMerger(int number_of_threads, const py::dict& options)
+      : merger_(number_of_threads, pyobj_to_options(options)) {}
 
   void add_tile(RawProcessResult& tile) {
     py::gil_scoped_release release;
@@ -452,7 +456,8 @@ private:
 // instead of vertically.
 class PyHorizontalMerger {
 public:
-  PyHorizontalMerger(int number_of_threads, py::dict options) : merger_(number_of_threads, pyobj_to_options(options)) {}
+  PyHorizontalMerger(int number_of_threads, const py::dict& options)
+      : merger_(number_of_threads, pyobj_to_options(options)) {}
 
   void add_tile(RawProcessResult& tile) {
     py::gil_scoped_release release;
@@ -491,7 +496,8 @@ private:
   RasterStreamer streamer_;
 };
 
-py::list opencv_contour_to_cell_boundary(const py::object& points, const py::dict& bounds_in) {
+py::list opencv_contour_to_cell_boundary(const py::object& points,
+                                         const py::dict& bounds_in) { // NOLINT(bugprone-easily-swappable-parameters)
   auto input = pyobj_to_points(points);
 
   RectBounds bounds;
@@ -626,8 +632,8 @@ PYBIND11_MODULE(_contrek, m) {
       });
   m.def(
       "find_polygons",
-      [](Bitmap& bitmap, py::dict options, int32_t target_color, Contrek::MatchMode mode, Bitmap* test_bitmap,
-         int start_x, int end_x, int number_of_threads) {
+      [](Bitmap& bitmap, const py::dict& options, int32_t target_color, Contrek::MatchMode mode, Bitmap* test_bitmap,
+         int start_x, int end_x, int number_of_threads) { // NOLINT(bugprone-easily-swappable-parameters)
         Options cpp_options = pyobj_to_options(options);
         auto matcher = make_matcher(bitmap, target_color, mode);
         bool wants_concurrent = number_of_threads > 0;
@@ -664,7 +670,7 @@ PYBIND11_MODULE(_contrek, m) {
             Returns the same dict shape as trace().
         )doc");
 
-  py::class_<RasterSource>(m, "RasterSource");
+  py::class_<RasterSource>(m, "RasterSource"); // NOLINT(bugprone-unused-raii)
 
   py::class_<PngSource, RasterSource>(m, "PngSource")
       .def(py::init<const std::string&>(), py::arg("path"))
@@ -724,8 +730,8 @@ PYBIND11_MODULE(_contrek, m) {
 
   m.def(
       "find_polygons_raw",
-      [](Bitmap& bitmap, py::dict options, int32_t target_color, Contrek::MatchMode mode, Bitmap* test_bitmap,
-         int start_x, int end_x, int number_of_threads) {
+      [](Bitmap& bitmap, const py::dict& options, int32_t target_color, Contrek::MatchMode mode, Bitmap* test_bitmap,
+         int start_x, int end_x, int number_of_threads) { // NOLINT(bugprone-easily-swappable-parameters)
         Options cpp_options = pyobj_to_options(options);
         auto matcher = make_matcher(bitmap, target_color, mode);
 
