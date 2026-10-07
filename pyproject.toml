@@ -48,3 +48,7 @@ BUILD_EXAMPLES = "OFF"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m 'not large'"
+markers = [
+    "large: large/expensive tests excluded from the default test suite"
+]

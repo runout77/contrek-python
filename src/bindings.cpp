@@ -251,26 +251,30 @@ py::dict process_result_to_pydict(const ::ProcessResult& result) {
   return out;
 }
 
-// Build a Matcher the same way Contrek::trace() does internally, so the
-// low-level API stays consistent with the high-level one: target_color
-// == -1 means "read the color at pixel (0, 0) of the given bitmap".
-std::unique_ptr<Matcher> make_matcher(Bitmap& bitmap, int32_t target_color, Contrek::MatchMode mode) {
-  int32_t color_to_match = target_color;
-  if (color_to_match == -1) {
-    // Auto-detect assumes a packed 4-byte-per-pixel (RGBA) layout,
-    // valid for FastPngBitmap but NOT for a plain string-backed
-    // Bitmap (typically 1 byte per character). Guard against
-    // reading past the row buffer in that case.
+// Build a Matcher for the Python API.
+// target_color == None means "read the color at pixel (0, 0)".
+// Any integer value, including -1, is treated as an explicit color.
+std::unique_ptr<Matcher> make_matcher(Bitmap& bitmap,const py::object& target_color,Contrek::MatchMode mode) {
+  int32_t color_to_match;
+
+  if (target_color.is_none()) {
     if (bitmap.get_bytes_per_pixel() != 4) {
-      throw std::invalid_argument("target_color=-1 (auto-detect) requires a 4-byte-per-pixel "
-                                  "bitmap (e.g. FastPngBitmap); pass an explicit target_color "
-                                  "for string-backed Bitmap instances.");
+      throw std::invalid_argument(
+          "target_color=None (auto-detect) requires a 4-byte-per-pixel bitmap"
+      );
     }
-    color_to_match = static_cast<int32_t>(*reinterpret_cast<const uint32_t*>(bitmap.get_row_ptr(0)));
+
+    color_to_match = static_cast<int32_t>(
+        *reinterpret_cast<const uint32_t*>(bitmap.get_row_ptr(0))
+    );
+  } else {
+    color_to_match = target_color.cast<int32_t>();
   }
+
   if (mode == Contrek::MatchMode::NOT_COLOR) {
     return std::make_unique<RGBNotMatcher>(color_to_match);
   }
+
   return std::make_unique<RGBMatcher>(color_to_match);
 }
 
@@ -632,7 +636,7 @@ PYBIND11_MODULE(_contrek, m) {
       });
   m.def(
       "find_polygons",
-      [](Bitmap& bitmap, const py::dict& options, int32_t target_color, Contrek::MatchMode mode, Bitmap* test_bitmap,
+      [](Bitmap& bitmap, const py::dict& options, const py::object& target_color, Contrek::MatchMode mode, Bitmap* test_bitmap,
          int start_x, int end_x, int number_of_threads) { // NOLINT(bugprone-easily-swappable-parameters)
         Options cpp_options = pyobj_to_options(options);
         auto matcher = make_matcher(bitmap, target_color, mode);
@@ -653,7 +657,7 @@ PYBIND11_MODULE(_contrek, m) {
         }
         return out;
       },
-      py::arg("bitmap"), py::arg("options") = py::dict(), py::arg("target_color") = -1,
+      py::arg("bitmap"), py::arg("options") = py::dict(), py::arg("target_color") = py::none(),
       py::arg("mode") = Contrek::MatchMode::NOT_COLOR, py::arg("test_bitmap") = nullptr, py::arg("start_x") = 0,
       py::arg("end_x") = -1, py::arg("number_of_threads") = 0,
       R"doc(
@@ -730,7 +734,7 @@ PYBIND11_MODULE(_contrek, m) {
 
   m.def(
       "find_polygons_raw",
-      [](Bitmap& bitmap, const py::dict& options, int32_t target_color, Contrek::MatchMode mode, Bitmap* test_bitmap,
+      [](Bitmap& bitmap, const py::dict& options, const py::object& target_color, Contrek::MatchMode mode, Bitmap* test_bitmap,
          int start_x, int end_x, int number_of_threads) { // NOLINT(bugprone-easily-swappable-parameters)
         Options cpp_options = pyobj_to_options(options);
         auto matcher = make_matcher(bitmap, target_color, mode);
@@ -750,7 +754,7 @@ PYBIND11_MODULE(_contrek, m) {
         }
         return RawProcessResult(std::unique_ptr<::ProcessResult>(raw));
       },
-      py::arg("bitmap"), py::arg("options") = py::dict(), py::arg("target_color") = -1,
+      py::arg("bitmap"), py::arg("options") = py::dict(), py::arg("target_color") = py::none(),
       py::arg("mode") = Contrek::MatchMode::NOT_COLOR, py::arg("test_bitmap") = nullptr, py::arg("start_x") = 0,
       py::arg("end_x") = -1, py::arg("number_of_threads") = 0,
       R"doc(
