@@ -91,11 +91,6 @@ def test_config_defaults():
 
 
 def test_bitmap():
-    print(contrek.Identifier)
-    print(contrek.Bitmap)
-    print(contrek.FastPngBitmap)
-    print(contrek.find_polygons)
-
     pattern = "0000000011110001111000000000"
     bitmap = contrek.Bitmap(pattern, 7)
     assert bitmap.w() == 7

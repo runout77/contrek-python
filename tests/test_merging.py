@@ -61,7 +61,7 @@ def test_svg_streaming_merger(sample_stripes):
 
     try:
         merger = contrek.SvgStreamingMerger(
-            options={"bounds": True},
+            options={"bounds": True, "unsafe_mode": True},
             output_path=temp_path,
             width=width,
             height=height,
@@ -106,7 +106,9 @@ def test_geojson_streaming_merger(sample_stripes):
 
     try:
         merger = contrek.GeoJsonStreamingMerger(
-            options={"bounds": True}, output_path=temp_path, pixel_value=34
+            options={"bounds": True, "unsafe_mode": True},
+            output_path=temp_path,
+            pixel_value=34,
         )
         for i, stripe in enumerate(sample_stripes):
             bitmap = contrek.Bitmap(stripe, width)
@@ -173,6 +175,7 @@ def test_geojson_streaming_merger_with_compression(triangle_stripes):
         merger = contrek.GeoJsonStreamingMerger(
             options={
                 "bounds": True,
+                "unsafe_mode": True,
                 "compress": {"uniq": True, "linear": True, "douglas_peucker": True},
             },
             output_path=temp_path,
@@ -222,6 +225,7 @@ def test_svg_streaming_merger_with_compression(triangle_stripes):
         merger = contrek.SvgStreamingMerger(
             options={
                 "bounds": True,
+                "unsafe_mode": True,
                 "compress": {"uniq": True, "linear": True, "douglas_peucker": True},
             },
             output_path=temp_path,
@@ -295,7 +299,7 @@ def test_vertical_merger():
     )
     assert result_down.to_dict()["versus"] == int(contrek.Versus.CLOCKWISE)
 
-    merger = contrek.VerticalMerger()
+    merger = contrek.VerticalMerger(options={"unsafe_mode": True})
     merger.add_tile(result_up)
     merger.add_tile(result_down)
 
@@ -359,7 +363,9 @@ def test_horizontal_merger():
     )
 
     # monothread merger
-    merger = contrek.HorizontalMerger(number_of_threads=2)
+    merger = contrek.HorizontalMerger(
+        number_of_threads=2, options={"unsafe_mode": True}
+    )
     merger.add_tile(result_left)
     merger.add_tile(result_right)
 

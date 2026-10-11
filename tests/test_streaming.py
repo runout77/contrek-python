@@ -14,7 +14,7 @@ def test_streaming_png():
     streamer = contrek.RasterStreamer(source, stripe_height=20)
     buffer_bitmap = contrek.RawBitmap(source.width, streamer.stripe_height)
     finder = contrek.VerticalMerger(
-        options={"compress": {"uniq": True, "linear": True}}
+        options={"unsafe_mode": True, "compress": {"uniq": True, "linear": True}}
     )
 
     def process_stripe(bitmap, buffer_rows, buffer_size, rows_read):
@@ -54,6 +54,7 @@ def test_streaming_geotiff(tmp_path):
     output_path = str(tmp_path / "output.geojson")
     geo_finder = contrek.GeoJsonStreamingMerger(
         options={
+            "unsafe_mode": True,
             "geo_localization": localization,
             "compress": {
                 "uniq": True,
