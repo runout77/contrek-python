@@ -393,8 +393,8 @@ private:
 
 class PyGeoJsonStreamingMerger {
 public:
-  PyGeoJsonStreamingMerger(const py::dict& options, const std::string& output_path, uint32_t pixel_value)
-      : ofs_(output_path), merger_(0, pyobj_to_options(options), &ofs_, pixel_value) {
+  PyGeoJsonStreamingMerger(const py::dict& options, const std::string& output_path)
+      : ofs_(output_path), merger_(0, pyobj_to_options(options), &ofs_) {
     if (!ofs_.is_open()) {
       throw std::runtime_error("Unable to open output file: " + output_path);
     }
@@ -790,8 +790,8 @@ PYBIND11_MODULE(_contrek, m) {
            "Finalize the stream and return summary metadata as a dict.");
 
   py::class_<PyGeoJsonStreamingMerger>(m, "GeoJsonStreamingMerger")
-      .def(py::init<py::dict, std::string, uint32_t>(), py::arg("options"), py::arg("output_path"),
-           py::arg("pixel_value"), "Streams polygons to a GeoJSON file incrementally as tiles are added.")
+      .def(py::init<py::dict, std::string>(), py::arg("options"), py::arg("output_path"),
+           "Streams polygons to a GeoJSON file incrementally as tiles are added.")
       .def("add_tile", &PyGeoJsonStreamingMerger::add_tile, py::arg("tile"), py::arg("flush") = false,
            "Feed one tile's RawProcessResult. Pass flush=True on the last tile.")
       .def("process_info", &PyGeoJsonStreamingMerger::process_info,

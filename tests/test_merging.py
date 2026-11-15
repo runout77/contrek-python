@@ -107,8 +107,7 @@ def test_geojson_streaming_merger(sample_stripes):
     try:
         merger = contrek.GeoJsonStreamingMerger(
             options={"bounds": True, "unsafe_mode": True},
-            output_path=temp_path,
-            pixel_value=34,
+            output_path=temp_path
         )
         for i, stripe in enumerate(sample_stripes):
             bitmap = contrek.Bitmap(stripe, width)
@@ -178,8 +177,7 @@ def test_geojson_streaming_merger_with_compression(triangle_stripes):
                 "unsafe_mode": True,
                 "compress": {"uniq": True, "linear": True, "douglas_peucker": True},
             },
-            output_path=temp_path,
-            pixel_value=34,
+            output_path=temp_path
         )
         for i, stripe in enumerate(triangle_stripes):
             bitmap = contrek.Bitmap(stripe, width)
