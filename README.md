@@ -279,7 +279,7 @@ geo_finder = contrek.GeoJsonStreamingMerger(
             "linear": True,
         },
     },
-    output_path=output_path
+    output_path=output_path,
 )
 
 total_height = 0

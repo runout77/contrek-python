@@ -254,19 +254,15 @@ py::dict process_result_to_pydict(const ::ProcessResult& result) {
 // Build a Matcher for the Python API.
 // target_color == None means "read the color at pixel (0, 0)".
 // Any integer value, including -1, is treated as an explicit color.
-std::unique_ptr<Matcher> make_matcher(Bitmap& bitmap,const py::object& target_color,Contrek::MatchMode mode) {
+std::unique_ptr<Matcher> make_matcher(Bitmap& bitmap, const py::object& target_color, Contrek::MatchMode mode) {
   int32_t color_to_match;
 
   if (target_color.is_none()) {
     if (bitmap.get_bytes_per_pixel() != 4) {
-      throw std::invalid_argument(
-          "target_color=None (auto-detect) requires a 4-byte-per-pixel bitmap"
-      );
+      throw std::invalid_argument("target_color=None (auto-detect) requires a 4-byte-per-pixel bitmap");
     }
 
-    color_to_match = static_cast<int32_t>(
-        *reinterpret_cast<const uint32_t*>(bitmap.get_row_ptr(0))
-    );
+    color_to_match = static_cast<int32_t>(*reinterpret_cast<const uint32_t*>(bitmap.get_row_ptr(0)));
   } else {
     color_to_match = target_color.cast<int32_t>();
   }
@@ -636,8 +632,9 @@ PYBIND11_MODULE(_contrek, m) {
       });
   m.def(
       "find_polygons",
-      [](Bitmap& bitmap, const py::dict& options, const py::object& target_color, Contrek::MatchMode mode, Bitmap* test_bitmap,
-         int start_x, int end_x, int number_of_threads) { // NOLINT(bugprone-easily-swappable-parameters)
+      [](Bitmap& bitmap, const py::dict& options, const py::object& target_color, Contrek::MatchMode mode,
+         Bitmap* test_bitmap, int start_x, int end_x,
+         int number_of_threads) { // NOLINT(bugprone-easily-swappable-parameters)
         Options cpp_options = pyobj_to_options(options);
         auto matcher = make_matcher(bitmap, target_color, mode);
         bool wants_concurrent = number_of_threads > 0;
@@ -734,8 +731,9 @@ PYBIND11_MODULE(_contrek, m) {
 
   m.def(
       "find_polygons_raw",
-      [](Bitmap& bitmap, const py::dict& options, const py::object& target_color, Contrek::MatchMode mode, Bitmap* test_bitmap,
-         int start_x, int end_x, int number_of_threads) { // NOLINT(bugprone-easily-swappable-parameters)
+      [](Bitmap& bitmap, const py::dict& options, const py::object& target_color, Contrek::MatchMode mode,
+         Bitmap* test_bitmap, int start_x, int end_x,
+         int number_of_threads) { // NOLINT(bugprone-easily-swappable-parameters)
         Options cpp_options = pyobj_to_options(options);
         auto matcher = make_matcher(bitmap, target_color, mode);
 
